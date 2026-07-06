@@ -5,3 +5,9 @@ vendor-kontrak.html
 laporan-analitik.html
 procureiq_v2_vendor_filter_fix.html
 dummy_pengajuan_40k.csv
+
+node_modules/
+_e2e.mjs
+package.json
+package-lock.json
+_shot.mjs

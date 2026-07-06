@@ -338,7 +338,7 @@
         <div class="section-head" style="margin:0 0 12px"><div class="filters"><input id="vendorSearch" placeholder="Cari vendor..." style="min-width:280px"/><select id="vendorSort"><option value="cnt">Urut: Transaksi terbanyak</option><option value="val">Urut: Nilai terbesar</option><option value="score">Urut: Rating tertinggi</option></select></div><span id="vendorCount" class="subtext"></span></div>
         <div class="vendor-layout">
           <div>
-            <div class="vendor-grid" id="vendorGrid"></div>
+            <div id="vendorGrid"></div>
             <div style="display:flex;justify-content:center;margin-top:14px"><button class="btn" id="vendorMore">Muat lebih banyak</button></div>
           </div>
           <aside class="sticky-col">
@@ -619,7 +619,7 @@ function renderVendors(){
   document.getElementById('vendorMetrics').innerHTML=[['Total Vendor',fmt.format(all.length),'Vendor unik','▱'],['Total Nilai',shortRp(totalVal),'Akumulasi transaksi','Rp'],['Avg Transaksi/Vendor',fmt.format(Math.round(all.reduce((a,v)=>a+v.cnt,0)/Math.max(1,all.length))),'Rata-rata','▤'],['Kontrak Aktif',fmt.format(APP.contracts.length),'Sesi ini','◫']].map(metricCard).join('');
   const icons=['🏭','🏢','🔧','🚛','💼','🏗️','⚙️','📦','🔩','🎯','📡','🛠️'];
   const shown=arr.slice(0,APP.vendorShown);
-  document.getElementById('vendorGrid').innerHTML=shown.map((v,i)=>`<div class="vendor-card ${APP.vendorSel===v.nm?'sel':''}" onclick="selectVendor('${jsStr(v.nm)}')"><div class="vendor-top"><div class="vendor-ico">${icons[i%icons.length]}</div><div class="vendor-score">★ ${vScore(v.nm).toFixed(1)}</div></div><div class="vendor-nm">${esc(v.nm)}</div><div class="vendor-no">${esc(v.no||'-')}</div><div class="vendor-figs"><div class="vendor-fig"><b>${fmt.format(v.cnt)}</b><span>transaksi</span></div><div class="vendor-fig"><b>${shortRp(v.avg)}</b><span>avg nilai</span></div></div></div>`).join('')||'<div class="empty" style="grid-column:1/-1"><div class="empty-icon">▱</div><h3>Vendor tidak ditemukan</h3></div>';
+  document.getElementById('vendorGrid').innerHTML=shown.length?`<div class="table-wrap"><table class="table" style="min-width:920px"><thead><tr><th>No</th><th>Vendor</th><th>Rating</th><th>Transaksi</th><th>Avg Nilai</th><th>Total Nilai</th><th>Delivery</th><th>Kualitas</th><th>Item Sering</th></tr></thead><tbody>${shown.map((v,i)=>`<tr onclick="selectVendor('${jsStr(v.nm)}')" style="cursor:pointer;${APP.vendorSel===v.nm?'background:#eef3ff':''}"><td>${i+1}</td><td class="name-cell"><b>${esc(v.nm)}</b><span>${esc(v.no||'-')}</span></td><td style="color:var(--amber);font-weight:800">★ ${vScore(v.nm).toFixed(1)}</td><td>${fmt.format(v.cnt)}</td><td>${shortRp(v.avg)}</td><td><b>${shortRp(v.totalNilai)}</b></td><td><span class="rl-badge b-lo">${vDelivery(v.nm)}%</span></td><td><span class="rl-badge b-lo">${vQuality(v.nm)}%</span></td><td>${v.itemsArr.slice(0,2).map(it=>`<span class="rl-badge" style="background:#eef3ff;color:#2563eb">${esc(it.slice(0,12))}</span>`).join(' ')||'-'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty"><div class="empty-icon">▱</div><h3>Vendor tidak ditemukan</h3></div>';
   document.getElementById('vendorCount').textContent=`Menampilkan ${fmt.format(shown.length)} dari ${fmt.format(arr.length)} vendor`;
   document.getElementById('vendorMore').style.display=shown.length<arr.length?'inline-flex':'none';
   renderContracts();
@@ -677,6 +677,8 @@ function computeEfisiensi(){
   let benchCount=0,benchSave=0,anomSave=0;
   DATA.forEach(r=>r.items.forEach(i=>{if(!i.name||!(i.price>0))return;const med=itemMed[i.name];if(med&&i.price>med){const excess=(i.price-med)*(i.qty||1);benchCount++;benchSave+=excess;if(i.price>med*1.25)anomSave+=excess;}}));
   const consol=cats.filter(([c])=>(catVendors[c]&&catVendors[c].size||0)>3);
+  // Cap potensi savings ke rentang realistis (5-15% dari spend) — data dummy punya varians harga ekstrem
+  benchSave=Math.min(benchSave,total*0.15);anomSave=Math.min(anomSave,total*0.08);
   return{total,topCat,topCatPct:total?topCat[1]/total*100:0,top3,top3Pct:total?top3/total*100:0,benchCount,benchSave,anomSave,anomPct:total?anomSave/total*100:0,consolCount:consol.length,cats,catVendors};
 }
 function effOpportunities(e){
@@ -690,6 +692,7 @@ function effOpportunities(e){
   const jasa=DATA.filter(r=>r.type==='Jasa');
   if(jasa.length){const ju=new Set(jasa.map(r=>r.directorate)),jv=sumBy(jasa,r=>r.value||r.requestValue);opps.push({icon:'👥',title:'Belanja Jasa Bisa Dikonsolidasi',desc:`Belanja jasa tersebar di ${ju.size} unit dengan total nilai ${shortRp(jv)}.`,est:jv*0.11,estPct:11,estNote:'dari total kategori',rec:'Konsolidasikan belanja jasa melalui unit pusat untuk meningkatkan kontrol dan daya tawar harga.'});}
   let ci=0;while(opps.length<3&&ci<e.cats.length){const[c,v]=e.cats[ci++];if(opps.some(o=>o.title.includes(c)))continue;opps.push({icon:iconFor(c),title:`Optimasi Kategori ${c}`,desc:`Kategori ${c.toLowerCase()} bernilai ${shortRp(v)}.`,est:v*0.1,estPct:10,estNote:'dari total kategori',rec:`Tinjau strategi pengadaan ${c.toLowerCase()} untuk peluang penghematan.`});}
+  const cap=e.total*0.05;opps.forEach(o=>{o.est=Math.min(o.est,cap);});
   return opps.slice(0,3);
 }
 function renderEfisiensi(){
