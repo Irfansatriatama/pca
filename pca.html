@@ -384,11 +384,15 @@
       </section>
 
       <section class="view" id="view-otomasi">
-        <div class="page-title"><h1>Otomasi &amp; Peringatan</h1><p>Saran perpanjangan pengadaan berulang (RPA) dan ringkasan proaktif seperti Google Analytics.</p></div>
+        <div class="page-title" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div><h1>Otomasi &amp; Peringatan</h1><p>Saran perpanjangan pengadaan berulang (RPA) dan ringkasan proaktif seperti Google Analytics. Semua aksi tersimpan otomatis.</p></div><button class="btn" id="resetAksi">↺ Reset Data Aksi</button></div>
         <div class="grid grid-4" id="digestMetrics" style="margin-bottom:16px"></div>
         <div class="grid grid-2" style="align-items:start">
           <div class="card" style="padding:18px"><div class="section-head" style="margin:0 0 12px"><div><h2 style="font-size:15px">Peringatan &amp; Digest</h2><p class="subtext">Anomali &amp; kondisi yang perlu tindakan.</p></div></div><div id="digestList"></div></div>
           <div class="card" style="padding:18px"><div class="section-head" style="margin:0 0 12px"><div><h2 style="font-size:15px">Pengadaan Berulang (RPA)</h2><p class="subtext">Kandidat perpanjangan — prefill draft otomatis.</p></div></div><div id="recurringList"></div></div>
+        </div>
+        <div class="grid grid-2" style="align-items:start;margin-top:14px">
+          <div class="card" style="padding:18px"><div class="section-head" style="margin:0 0 12px"><div><h2 style="font-size:15px">Rencana Aksi Tersimpan</h2><p class="subtext">Dari Efisiensi, Risk, &amp; Perpanjangan.</p></div></div><div id="planList"></div></div>
+          <div class="card" style="padding:18px"><div class="section-head" style="margin:0 0 12px"><div><h2 style="font-size:15px">Aktivitas Terbaru</h2><p class="subtext">Jejak keputusan lintas modul.</p></div></div><div id="activityList"></div></div>
         </div>
       </section>
     </div>
@@ -420,6 +424,38 @@ let DATA=[], VENDORS={}, YEARS=[], DIRECTORATES=[], STATUSES=[];
 const SEED_DATA=null;
 const DEFAULT_CSV='dummy_pengadaan_40k.csv';
 const APP={apprState:{},apprTab:'menunggu',apprPage:1,vendorSel:null,vendorShown:24,contracts:[],masterTab:'vendor'};
+
+/* ===== STATE PERSISTEN (localStorage) — bikin aksi nyata & lintas-halaman ===== */
+const LS_KEY='pca_store_v1';
+let STORE={decisions:{},overrides:{},drafts:[],contracts:[],plans:[],activity:[]};
+const freshStore=()=>({decisions:{},overrides:{},drafts:[],contracts:[],plans:[],activity:[]});
+function loadStore(){try{const s=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(s&&typeof s==='object')STORE=Object.assign(freshStore(),s);}catch(e){console.warn('store load',e);}}
+function saveStore(){try{localStorage.setItem(LS_KEY,JSON.stringify(STORE));}catch(e){console.warn('store save',e);}}
+function nowStr(){try{return new Date().toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
+function logActivity(text,icon){STORE.activity.unshift({t:text,ic:icon||'•',at:nowStr()});if(STORE.activity.length>60)STORE.activity.length=60;saveStore();}
+function setOverride(id,patch){STORE.overrides[id]=Object.assign(STORE.overrides[id]||{},patch);saveStore();}
+function afterAction(){updateApprBadge();const ot=document.getElementById('view-otomasi');if(ot&&ot.classList.contains('active'))renderOtomasi();}
+/* --- Aksi nyata (mutate DATA + persist + log) --- */
+function doKonversi(id){const r=DATA.find(x=>x.id===id);if(!r)return;r.group='INVESTASI';setOverride(id,{group:'INVESTASI'});logActivity('Konversi '+assetItemName(r)+' ('+id+') → INVESTASI','⇄');renderAsset();afterAction();toast('Dicatat sebagai INVESTASI. Cek metrik "Sudah Investasi".');}
+function doAssetFlag(id,flag,label){const r=DATA.find(x=>x.id===id);if(!r)return;r._flag=flag;setOverride(id,{_flag:flag});logActivity(label+' — '+assetItemName(r)+' ('+id+')','🏷');renderAsset();afterAction();toast(label+' tersimpan.');}
+function tarikPemegang(h){const list=assetList().filter(r=>assetHolder(r)===h);list.forEach(r=>{r._flag='ditarik';setOverride(r.id,{_flag:'ditarik'});});logActivity('Menarik '+list.length+' aset dari '+h,'🏷');renderAsset();afterAction();toast(list.length+' aset dari '+h+' ditandai ditarik.');}
+function savePlan(title,kind,value){STORE.plans.unshift({title,kind:kind||'Efisiensi',value:value||'',at:nowStr()});saveStore();logActivity('Rencana aksi: '+title,'📋');afterAction();toast('Rencana aksi disimpan (persisten).');}
+function submitDraft(toApproval){
+  const g=id=>(document.getElementById(id).value||'').trim();
+  const name=g('fName');if(!name){toast('Isi Nama Pengadaan dulu.');return;}
+  const val=pNum(g('fValue'));
+  let items=g('fSpec').split(/\n+/).map(s=>s.replace(/^\d+\.\s*/,'').trim()).filter(Boolean).map(s=>{const p=s.split(/\s+-\s+/);return{name:p[0],desc:p[1]||'',qty:1,volume:1,price:0};});
+  if(!items.length)items=[{name,desc:g('fDesc'),qty:1,volume:1,price:val}];
+  const id='PR-'+Date.now().toString().slice(-8);
+  const rec={id,name,type:g('fType')||'Barang',group:g('fGroup')||'PROYEK',directorate:g('fDir'),requesterCode:'',requester:'Demo User',requestValue:val,method:g('fMethod'),value:val,vendorNo:'',vendor:'',toolType:'',projectCode:'',status:toApproval?'Penilaian':'Draft',docStatus:'Belum Lengkap',year:new Date().getFullYear(),estimateFinish:g('fDate'),approveDate:'',items,_new:true};
+  DATA.push(rec);STORE.drafts.push(rec);saveStore();buildIndex();buildVendors();fillOptions();
+  logActivity((toApproval?'Mengajukan':'Menyimpan draft')+' pengadaan '+id+' — '+name,'📝');
+  ['fName','fDesc','fValue','fSpec','fDate'].forEach(k=>{const el=document.getElementById(k);if(el)el.value='';});
+  selectedRef=null;afterAction();
+  if(toApproval){showView('approval');toast('Pengadaan '+id+' masuk antrian Persetujuan.');}
+  else{showView('history');toast('Draft '+id+' tersimpan di Daftar Pengadaan.');}
+}
+function resetAksi(){if(!confirm('Hapus semua data aksi (approval, konversi, kontrak, rencana, aktivitas)? Data CSV tidak terhapus.'))return;STORE=freshStore();saveStore();toast('Data aksi direset.');location.reload();}
 
 const pNum=v=>{const n=Number(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
 const yearOf=d=>{const m=String(d||'').match(/(19|20)\d{2}/);return m?+m[0]:0;};
@@ -467,7 +503,10 @@ const vQuality=nm=>Math.min(99,80+((nm.charCodeAt(0)||0)%18));
 function bootData(data){
   if(!data||!data.length){gateStatus('Data kosong / format tidak dikenali.','err');return;}
   DATA=data;
-  APP.apprState={};APP.apprTab='menunggu';APP.apprPage=1;APP.vendorSel=null;APP.vendorShown=24;APP.contracts=[];APP.masterTab='vendor';APP.assetTab='registri';APP.serapanTab='serapan';histPage=1;
+  loadStore();
+  STORE.drafts.forEach(d=>{if(!DATA.some(x=>x.id===d.id))DATA.push(d);});
+  DATA.forEach(r=>{const o=STORE.overrides[r.id];if(o)Object.assign(r,o);});
+  APP.apprState=Object.assign({},STORE.decisions);APP.apprTab='menunggu';APP.apprPage=1;APP.vendorSel=null;APP.vendorShown=24;APP.contracts=(STORE.contracts||[]).slice();APP.masterTab='vendor';APP.assetTab='registri';APP.serapanTab='serapan';histPage=1;
   RISK=null;const re=document.getElementById('riskReport'),rem=document.getElementById('riskEmpty');if(re){re.style.display='none';rem.style.display='block';}
   buildIndex();buildVendors();fillOptions();
   document.getElementById('dataGate').classList.add('hide');
@@ -514,8 +553,8 @@ function apprCard(r){
     :`<div class="appr-foot"><input class="appr-note" id="note-${esc(r.id)}" placeholder="Catatan reviewer (opsional)"/><button class="btn danger" onclick="decideAppr('${jsStr(r.id)}','rejected')">Tolak</button><button class="btn primary" onclick="decideAppr('${jsStr(r.id)}','approved')">Setujui</button></div>`;
   return `<div class="appr-card"><div class="appr-main"><div><span class="pill ${r.type==='Barang'?'blue':r.type==='Jasa'?'green':'amber'}">${esc(r.type||'-')}</span><h3 class="appr-h3">${esc(r.name||r.id)}</h3><div class="appr-meta"><span>${esc(r.id)}</span><span>•</span><span>${esc(r.directorate||'-')}</span><span>•</span><span>${esc(r.vendor||'Vendor belum ditetapkan')}</span><span>•</span><span>${esc(r.method||'-')}</span></div></div><div class="appr-val"><b>${shortRp(r.value||r.requestValue)}</b><div style="font-size:10px;color:var(--muted)">${r.items.length} item · ${r.year}</div><button class="btn small" style="margin-top:6px" onclick="openDetail('${jsStr(r.id)}')">Detail</button></div></div>${foot}</div>`;
 }
-function decideAppr(id,status){const el=document.getElementById('note-'+id);const note=(el&&el.value||'').trim();APP.apprState[id]={status,note};renderApproval();toast(status==='approved'?'Pengadaan disetujui.':'Pengadaan ditolak.');}
-function undoAppr(id){delete APP.apprState[id];renderApproval();}
+function decideAppr(id,status){const el=document.getElementById('note-'+id);const note=(el&&el.value||'').trim();APP.apprState[id]={status,note,at:nowStr()};STORE.decisions=APP.apprState;saveStore();logActivity((status==='approved'?'Menyetujui':'Menolak')+' pengadaan '+id,status==='approved'?'✓':'✕');renderApproval();afterAction();toast(status==='approved'?'Pengadaan disetujui.':'Pengadaan ditolak.');}
+function undoAppr(id){delete APP.apprState[id];STORE.decisions=APP.apprState;saveStore();renderApproval();afterAction();}
 
 /* ===================== EVALUASI VENDOR & KONTRAK ===================== */
 function vendorSorted(){
@@ -550,7 +589,7 @@ function saveContract(){
   const g=id=>document.getElementById(id).value;
   const no=g('ctNo').trim(),nm=g('ctNm').trim(),vendor=g('ctVendor').trim(),nilai=pNum(g('ctNilai')),real=pNum(g('ctReal')),dari=g('ctDari'),sampai=g('ctSampai');
   if(!no||!nm||!vendor||!nilai){toast('Lengkapi field wajib (nomor, nama, vendor, nilai).');return;}
-  APP.contracts.push({no,nm,vendor,nilai,realisasi:real,dari,sampai});closeModal('contractModal');renderContracts();renderVendors();toast('Kontrak ditambahkan.');
+  APP.contracts.push({no,nm,vendor,nilai,realisasi:real,dari,sampai});STORE.contracts=APP.contracts;saveStore();logActivity('Menambah kontrak '+no+' — '+vendor,'📄');closeModal('contractModal');renderContracts();renderVendors();afterAction();toast('Kontrak ditambahkan (persisten).');
   ['ctNo','ctNm','ctVendor','ctNilai','ctReal','ctDari','ctSampai'].forEach(id=>document.getElementById(id).value='');
 }
 
@@ -612,7 +651,7 @@ function renderEfisiensi(){
     {ico:'🎯',cls:'indigo',t:'Peluang Konsolidasi',d:`${e.consolCount} kategori dapat dikonsolidasikan ke lebih sedikit vendor untuk meningkatkan daya tawar.`,big:e.consolCount+' Kategori',bl:'Untuk Dikonsolidasi'}
   ].map(c=>`<div class="insight-card"><div class="insight-ico ic-${c.cls}">${c.ico}</div><h3>${c.t}</h3><div class="desc">${c.d}</div><div class="big ${c.cls}">${c.big}<small>${c.bl}</small></div></div>`).join('');
   const opps=effOpportunities(e);
-  document.getElementById('oppGrid').innerHTML=opps.map((o,i)=>{const col=i===1?'green':'blue';return `<div class="card opp-card"><div class="opp-top"><div class="opp-thumb">${o.icon}</div><div><h3>${esc(o.title)}</h3><p>${esc(o.desc)}</p></div></div><div class="opp-est ${col}"><div><div class="lbl">Estimasi Potensi Efisiensi</div><div class="val">${shortRp(o.est)}</div><div class="pct">(${o.estPct}% ${esc(o.estNote)})</div></div><div class="arrow">↗</div></div><div class="opp-rec"><b>Rekomendasi</b><p>${esc(o.rec)}</p></div><div class="opp-actions"><button class="btn" onclick="toast('Membuka rincian rekomendasi (prototype).')">Lihat Rekomendasi</button><button class="btn primary" onclick="toast('Rencana aksi dibuat (prototype).')">Buat Rencana →</button></div></div>`;}).join('');
+  document.getElementById('oppGrid').innerHTML=opps.map((o,i)=>{const col=i===1?'green':'blue';return `<div class="card opp-card"><div class="opp-top"><div class="opp-thumb">${o.icon}</div><div><h3>${esc(o.title)}</h3><p>${esc(o.desc)}</p></div></div><div class="opp-est ${col}"><div><div class="lbl">Estimasi Potensi Efisiensi</div><div class="val">${shortRp(o.est)}</div><div class="pct">(${o.estPct}% ${esc(o.estNote)})</div></div><div class="arrow">↗</div></div><div class="opp-rec"><b>Rekomendasi</b><p>${esc(o.rec)}</p></div><div class="opp-actions"><button class="btn" onclick="toast('Rekomendasi: ${jsStr(o.rec)}')">Lihat Rekomendasi</button><button class="btn primary" onclick="savePlan('${jsStr(o.title)}','Efisiensi','${jsStr(shortRp(o.est))}')">Buat Rencana →</button></div></div>`;}).join('');
 }
 
 /* ===================== RISK ANALYSIS (gambar 2) ===================== */
@@ -700,16 +739,16 @@ function renderAsset(){
     document.getElementById('assetCount').textContent=`${fmt.format(Math.min(rows.length,400))} dari ${fmt.format(rows.length)} aset`;
   }else if(tab==='konversi'){
     const rows=proyek.map(r=>({r,contrib:pt[r.projectCode]?(r.value||r.requestValue)/pt[r.projectCode]*100:0})).filter(x=>!q||norm(x.r.name+' '+x.r.projectCode+' '+assetItemName(x.r)).includes(q)).sort((a,b)=>(b.r.value||b.r.requestValue)-(a.r.value||a.r.requestValue));
-    html=`<div class="alert info" style="margin-bottom:12px">ℹ Aset dibeli via anggaran <b>PROYEK</b> namun bernilai guna tinggi — direkomendasikan dikonversi ke <b>INVESTASI</b> agar tidak hilang setelah proyek selesai.</div><div class="table-wrap"><table class="table" style="min-width:960px"><thead><tr><th>Aset / Item</th><th>Proyek</th><th>Nilai Aset</th><th>Kontribusi ke Proyek</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(x=>`<tr><td class="name-cell"><b>${esc(assetItemName(x.r))}</b><span>${esc(x.r.id)}</span></td><td>${esc(x.r.projectCode||'-')}</td><td><b>${shortRp(x.r.value||x.r.requestValue)}</b></td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-track" style="width:80px"><div class="progress-fill" style="width:${Math.min(100,x.contrib)}%"></div></div><span>${x.contrib.toFixed(1)}%</span></div></td><td><span class="pill ${x.r.status==='Selesai'?'green':'gray'}">${esc(x.r.status||'-')}</span></td><td><button class="btn small primary" onclick="toast('Diajukan konversi ke INVESTASI (prototype).')">Konversi</button></td></tr>`).join('')||emptyRow(6)}</tbody></table></div>`;
+    html=`<div class="alert info" style="margin-bottom:12px">ℹ Aset dibeli via anggaran <b>PROYEK</b> namun bernilai guna tinggi — direkomendasikan dikonversi ke <b>INVESTASI</b> agar tidak hilang setelah proyek selesai.</div><div class="table-wrap"><table class="table" style="min-width:960px"><thead><tr><th>Aset / Item</th><th>Proyek</th><th>Nilai Aset</th><th>Kontribusi ke Proyek</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(x=>`<tr><td class="name-cell"><b>${esc(assetItemName(x.r))}</b><span>${esc(x.r.id)}</span></td><td>${esc(x.r.projectCode||'-')}</td><td><b>${shortRp(x.r.value||x.r.requestValue)}</b></td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-track" style="width:80px"><div class="progress-fill" style="width:${Math.min(100,x.contrib)}%"></div></div><span>${x.contrib.toFixed(1)}%</span></div></td><td><span class="pill ${x.r.status==='Selesai'?'green':'gray'}">${esc(x.r.status||'-')}</span></td><td><button class="btn small primary" onclick="doKonversi('${jsStr(x.r.id)}')">Konversi</button></td></tr>`).join('')||emptyRow(6)}</tbody></table></div>`;
     document.getElementById('assetCount').textContent=`${fmt.format(rows.length)} kandidat konversi`;
   }else if(tab==='pemegang'){
     const hold={};A.forEach(r=>{const h=assetHolder(r),o=hold[h]||(hold[h]={h,cnt:0,val:0,items:new Set()});o.cnt++;o.val+=r.value||r.requestValue;o.items.add(assetItemName(r));});
     const rows=Object.values(hold).filter(o=>!q||norm(o.h).includes(q)).sort((a,b)=>b.val-a.val);
-    html=`<div class="alert warn" style="margin-bottom:12px">⚠ Pemegang diturunkan dari <b>Nama Pemohon</b> (proxy PIC). Gunakan untuk menarik aset kembali ke unit sebagai aset resmi perusahaan.</div><div class="table-wrap"><table class="table"><thead><tr><th>Pemegang (PIC)</th><th>Jumlah Aset</th><th>Total Nilai</th><th>Contoh Aset</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(o=>`<tr><td class="name-cell"><b>${esc(o.h)}</b></td><td>${fmt.format(o.cnt)}</td><td><b>${shortRp(o.val)}</b></td><td>${esc([...o.items].slice(0,2).join(', '))}</td><td><button class="btn small" onclick="toast('Permintaan tarik aset dikirim (prototype).')">Tarik Aset</button></td></tr>`).join('')||emptyRow(5)}</tbody></table></div>`;
+    html=`<div class="alert warn" style="margin-bottom:12px">⚠ Pemegang diturunkan dari <b>Nama Pemohon</b> (proxy PIC). Gunakan untuk menarik aset kembali ke unit sebagai aset resmi perusahaan.</div><div class="table-wrap"><table class="table"><thead><tr><th>Pemegang (PIC)</th><th>Jumlah Aset</th><th>Total Nilai</th><th>Contoh Aset</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(o=>`<tr><td class="name-cell"><b>${esc(o.h)}</b></td><td>${fmt.format(o.cnt)}</td><td><b>${shortRp(o.val)}</b></td><td>${esc([...o.items].slice(0,2).join(', '))}</td><td><button class="btn small" onclick="tarikPemegang('${jsStr(o.h)}')">Tarik Aset</button></td></tr>`).join('')||emptyRow(5)}</tbody></table></div>`;
     document.getElementById('assetCount').textContent=`${fmt.format(rows.length)} pemegang`;
   }else{
     const rows=idle.filter(r=>!q||norm(r.name+' '+assetHolder(r)+' '+assetItemName(r)).includes(q)).sort((a,b)=>(b.value||b.requestValue)-(a.value||a.requestValue));
-    html=`<div class="alert info" style="margin-bottom:12px">ℹ Aset dari proyek berstatus <b>Selesai</b> — kandidat <b>idle</b>. Publikasikan agar unit lain bisa memanfaatkan kembali.</div><div class="table-wrap"><table class="table" style="min-width:900px"><thead><tr><th>Aset / Item</th><th>Proyek (Selesai)</th><th>Pemegang</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(r=>`<tr><td class="name-cell"><b>${esc(assetItemName(r))}</b><span>${esc(r.id)}</span></td><td>${esc(r.projectCode||'-')}</td><td>${esc(assetHolder(r))}</td><td><b>${shortRp(r.value||r.requestValue)}</b></td><td><button class="btn small soft" onclick="toast('Aset ditandai tersedia untuk dipakai ulang (prototype).')">Tandai Tersedia</button></td></tr>`).join('')||emptyRow(5)}</tbody></table></div>`;
+    html=`<div class="alert info" style="margin-bottom:12px">ℹ Aset dari proyek berstatus <b>Selesai</b> — kandidat <b>idle</b>. Publikasikan agar unit lain bisa memanfaatkan kembali.</div><div class="table-wrap"><table class="table" style="min-width:900px"><thead><tr><th>Aset / Item</th><th>Proyek (Selesai)</th><th>Pemegang</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(r=>`<tr><td class="name-cell"><b>${esc(assetItemName(r))}</b><span>${esc(r.id)}${r._flag?' · <b style="color:var(--blue)">'+esc(r._flag)+'</b>':''}</span></td><td>${esc(r.projectCode||'-')}</td><td>${esc(assetHolder(r))}</td><td><b>${shortRp(r.value||r.requestValue)}</b></td><td><button class="btn small soft" onclick="doAssetFlag('${jsStr(r.id)}','tersedia','Tandai tersedia')">Tersedia</button> <button class="btn small" onclick="doAssetFlag('${jsStr(r.id)}','ditarik','Tarik')">Tarik</button></td></tr>`).join('')||emptyRow(5)}</tbody></table></div>`;
     document.getElementById('assetCount').textContent=`${fmt.format(rows.length)} kandidat idle`;
   }
   document.getElementById('assetBody').innerHTML=html;
@@ -741,12 +780,12 @@ function renderSerapan(){
 /* ===================== OTOMASI & PERINGATAN (RPA + Digest) ===================== */
 function recurringItems(){const m={};DATA.forEach(r=>r.items.forEach(i=>{if(!i.name)return;const key=(r.vendor||'?')+'|'+i.name,o=m[key]||(m[key]={vendor:r.vendor,item:i.name,cnt:0,years:new Set(),lastYear:0,val:0});o.cnt++;o.years.add(r.year);o.lastYear=Math.max(o.lastYear,r.year);o.val+=(i.price||0)*(i.qty||1);}));return Object.values(m).filter(o=>o.cnt>=3&&(o.years.size>=2||/sewa/i.test(o.item))).sort((a,b)=>b.cnt-a.cnt).slice(0,12);}
 function navGo(v){showView(v);}
-function perpanjang(vendor,item){const r=DATA.find(x=>x.vendor===vendor&&x.items.some(i=>i.name===item))||DATA.find(x=>x.items.some(i=>i.name===item));if(r){selectedRef=r;currentQuery=item;showView('draft');toast('Draf perpanjangan disiapkan dari histori (RPA).');}else toast('Data sumber tidak ditemukan.');}
+function perpanjang(vendor,item){const r=DATA.find(x=>x.vendor===vendor&&x.items.some(i=>i.name===item))||DATA.find(x=>x.items.some(i=>i.name===item));if(r){selectedRef=r;currentQuery=item;logActivity('RPA: menyiapkan perpanjangan '+item,'⟳');showView('draft');toast('Draf perpanjangan disiapkan — tinggal simpan/ajukan.');}else toast('Data sumber tidak ditemukan.');}
 function renderOtomasi(){
   const pend=DATA.filter(r=>r.status==='Penilaian').filter(r=>!APP.apprState[r.id]).length;
   const idle=assetList().filter(r=>r.group==='PROYEK'&&r.status==='Selesai').length;
   const gaps=priceGaps().length,low=lowAbsorbCount(),rec=recurringItems();
-  document.getElementById('digestMetrics').innerHTML=[['Menunggu Approval',fmt.format(pend),'Perlu keputusan','✓'],['Aset Idle',fmt.format(idle),'Bisa dipakai ulang','◷'],['Price-Gap',fmt.format(gaps),'Anomali harga','⚠'],['Serapan Rendah',fmt.format(low),'Unit < 60%','◔']].map(metricCard).join('');
+  document.getElementById('digestMetrics').innerHTML=[['Menunggu Approval',fmt.format(pend),'Perlu keputusan','✓'],['Aset Idle',fmt.format(idle),'Bisa dipakai ulang','◷'],['Rencana Aksi',fmt.format(STORE.plans.length),'Tersimpan (persisten)','📋'],['Serapan Rendah',fmt.format(low),'Unit < 60%','◔']].map(metricCard).join('');
   const alerts=[];
   if(pend)alerts.push({ic:'✓',c:'blue',t:`${fmt.format(pend)} pengadaan menunggu persetujuan`,d:'Segera review agar tidak menumpuk menjadi outstanding.',act:"navGo('approval')"});
   if(low)alerts.push({ic:'◔',c:'orange',t:`${low} unit dengan serapan anggaran rendah`,d:'Penyerapan < 60% target — potensi dana keluar tidak optimal.',act:"navGo('serapan')"});
@@ -755,6 +794,8 @@ function renderOtomasi(){
   if(rec.length)alerts.push({ic:'⟳',c:'green',t:`${rec.length} pengadaan berulang mendekati siklus`,d:'Sistem menyiapkan draf perpanjangan otomatis (RPA).',act:"navGo('otomasi')"});
   document.getElementById('digestList').innerHTML=alerts.map(a=>`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)"><div class="insight-ico ic-${a.c}" style="width:34px;height:34px;font-size:15px;margin:0;flex:0 0 auto">${a.ic}</div><div style="flex:1"><b style="font-size:13px">${a.t}</b><p class="subtext" style="margin:3px 0 0">${a.d}</p></div>${a.act?`<button class="btn small" onclick="${a.act}">Lihat</button>`:''}</div>`).join('')||'<div class="subtext">Tidak ada peringatan.</div>';
   document.getElementById('recurringList').innerHTML=rec.map((o,i)=>`<div style="display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)"><div class="risk-rank">${i+1}</div><div style="flex:1;min-width:0"><b style="font-size:12px">${esc(o.item)}</b><div class="subtext" style="margin-top:2px">${esc(o.vendor||'-')} · ${o.cnt}× · terakhir ${o.lastYear}</div></div><button class="btn small primary" onclick="perpanjang('${jsStr(o.vendor||'')}','${jsStr(o.item)}')">Perpanjang →</button></div>`).join('')||'<div class="subtext">Tidak ada pengadaan berulang.</div>';
+  document.getElementById('planList').innerHTML=STORE.plans.length?STORE.plans.map(p=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)"><div style="min-width:0"><b style="font-size:12px">${esc(p.title)}</b><div class="subtext">${esc(p.kind)}${p.value?' · '+esc(p.value):''}</div></div><span class="subtext" style="white-space:nowrap">${esc(p.at)}</span></div>`).join(''):'<div class="subtext">Belum ada rencana. Buat dari Peluang Efisiensi, Risk Analysis, atau Perpanjang.</div>';
+  document.getElementById('activityList').innerHTML=STORE.activity.length?STORE.activity.slice(0,20).map(a=>`<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)"><span style="flex:0 0 auto">${a.ic}</span><div style="flex:1;min-width:0"><div style="font-size:12px">${esc(a.t)}</div><div class="subtext">${esc(a.at)}</div></div></div>`).join(''):'<div class="subtext">Belum ada aktivitas. Coba setujui pengadaan atau konversi aset.</div>';
 }
 
 const STOP=new Set('pengadaan untuk dan atau yang di ke dari pada dengan dalam serta kebutuhan barang jasa unit paket pekerjaan pembelian penyediaan'.split(' '));
@@ -829,7 +870,7 @@ function csvDownload(name,rows){if(!rows.length)return toast('Tidak ada data unt
 document.getElementById('mainSearchBtn').addEventListener('click',()=>doSearch(document.getElementById('mainSearch').value));document.getElementById('mainSearch').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(e.target.value)});document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>doSearch(b.dataset.q)));document.getElementById('resetSearch').addEventListener('click',resetSearch);document.getElementById('resultFilter').addEventListener('input',debounce(renderResults,120));document.getElementById('resultYear').addEventListener('change',renderResults);document.getElementById('resultType').addEventListener('change',renderResults);document.getElementById('createFromSearch').addEventListener('click',()=>{selectedRef=searchResults[0]?.r||null;showView('draft')});document.getElementById('useDetailRef').addEventListener('click',()=>detailRecord&&useReference(detailRecord.id));document.getElementById('openCompare').addEventListener('click',renderCompare);document.getElementById('clearCompare').addEventListener('click',()=>{compareIds.clear();updateCompareDock();renderResults()});
 ['histSearch','histYear','histType','histStatus'].forEach(id=>document.getElementById(id).addEventListener(id==='histSearch'?'input':'change',()=>{histPage=1;renderHistory()}));document.getElementById('histPrev').addEventListener('click',()=>{histPage--;renderHistory()});document.getElementById('histNext').addEventListener('click',()=>{histPage++;renderHistory()});document.getElementById('exportHistory').addEventListener('click',()=>csvDownload('daftar_pengadaan.csv',getHistoryFiltered().map(r=>({'Nomor Pengadaan':r.id,'Tahun':r.year,'Nama Pengadaan':r.name,'Jenis':r.type,'Kelompok':r.group,'Direktorat':r.directorate,'Metode':r.method,'Vendor':r.vendor,'Nilai':r.value,'Status':r.status}))));
 ['reportYear','reportType','reportDir'].forEach(id=>document.getElementById(id).addEventListener('change',renderReport));document.getElementById('exportReport').addEventListener('click',()=>{const a=reportFiltered();csvDownload('ringkasan_report.csv',[{'Jumlah Pengadaan':a.length,'Total Nilai':sumBy(a,r=>r.value||r.requestValue),'Jumlah Vendor':new Set(a.map(r=>r.vendor).filter(Boolean)).size,'Dokumen Lengkap':a.filter(r=>r.docStatus==='Sudah Lengkap').length}])});
-document.getElementById('saveDraft').addEventListener('click',()=>toast('Draft prototype berhasil disimpan.'));document.getElementById('continueDraft').addEventListener('click',()=>toast('Prototype: lanjut ke tahap spesifikasi.'));
+document.getElementById('saveDraft').addEventListener('click',()=>submitDraft(false));document.getElementById('continueDraft').addEventListener('click',()=>submitDraft(true));
 
 // --- Persetujuan events ---
 document.querySelectorAll('#apprTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#apprTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');APP.apprTab=b.dataset.atab;APP.apprPage=1;renderApproval();}));
@@ -850,8 +891,8 @@ document.getElementById('masterSearch').addEventListener('input',debounce(render
 document.getElementById('exportMaster').addEventListener('click',()=>csvDownload('master_'+APP.masterTab+'.csv',APP._masterRaw||[]));
 
 // --- Peluang Efisiensi events ---
-document.getElementById('planAllEff').addEventListener('click',()=>toast('Rencana aksi efisiensi dibuat (prototype).'));
-document.getElementById('planAllEff2').addEventListener('click',()=>toast('Rencana aksi efisiensi dibuat (prototype).'));
+document.getElementById('planAllEff').addEventListener('click',()=>savePlan('Rencana efisiensi menyeluruh','Efisiensi',''));
+document.getElementById('planAllEff2').addEventListener('click',()=>savePlan('Rencana efisiensi menyeluruh','Efisiensi',''));
 
 // --- Risk Analysis events ---
 document.getElementById('analyzeRisk').addEventListener('click',()=>{showView('risk');doRiskAnalysis(currentQuery);});
@@ -859,7 +900,9 @@ document.getElementById('riskSearchBtn').addEventListener('click',()=>doRiskAnal
 document.getElementById('riskSearchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doRiskAnalysis(e.target.value);});
 document.querySelectorAll('#riskTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#riskTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');riskTab=b.dataset.rtab;renderRiskTab();}));
 document.getElementById('riskExport').addEventListener('click',()=>{if(!RISK)return;csvDownload('risk_'+RISK.q+'.csv',RISK.dims.map(d=>({Risiko:d.key,Skor:d.score,Level:riskLevel(d.score),'Akar Penyebab':d.root,Dampak:d.dampak,Rekomendasi:d.rek})));});
-document.getElementById('riskMitigate').addEventListener('click',()=>toast('Rencana mitigasi dibuat (prototype).'));
+document.getElementById('riskMitigate').addEventListener('click',()=>{if(RISK)savePlan('Mitigasi risiko: '+RISK.q,'Risiko','skor '+RISK.overall);});
+
+document.getElementById('resetAksi').addEventListener('click',resetAksi);
 
 // --- Aset & Investasi events ---
 document.querySelectorAll('#assetTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#assetTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');APP.assetTab=b.dataset.atab2;renderAsset();}));
