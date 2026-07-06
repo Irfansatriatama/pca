@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>e-Pengadaan | Guided Procurement Prototype</title>
+<style>
+  :root{
+    --navy:#0d2240; --navy2:#17375e; --blue:#2563eb; --blue2:#1d4ed8;
+    --sky:#eaf2ff; --ink:#172033; --muted:#64748b; --line:#e2e8f0;
+    --bg:#f5f7fb; --card:#fff; --green:#0f9f6e; --greenbg:#e9fbf4;
+    --amber:#b7791f; --amberbg:#fff8e7; --red:#c2414b; --redbg:#fff0f1;
+    --purple:#7c3aed; --shadow:0 12px 34px rgba(13,34,64,.09);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+  button,input,select,textarea{font:inherit}
+  button{cursor:pointer}
+  .app{display:grid;grid-template-columns:256px minmax(0,1fr);min-height:100vh}
+  .sidebar{background:linear-gradient(180deg,var(--navy),#09182d);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+  .brand{display:flex;align-items:center;gap:12px;padding:4px 8px 24px;border-bottom:1px solid rgba(255,255,255,.11)}
+  .brand-mark{width:39px;height:39px;border-radius:12px;background:linear-gradient(135deg,#60a5fa,#2563eb);display:grid;place-items:center;font-weight:850;box-shadow:0 8px 20px rgba(37,99,235,.35)}
+  .brand strong{display:block;font-size:16px}.brand span{display:block;font-size:11px;color:#a8bdd7;margin-top:3px}
+  .nav-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7f9bbd;margin:24px 12px 9px}
+  .nav-btn{width:100%;border:0;background:transparent;color:#bed0e4;display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;text-align:left;margin:3px 0;font-weight:650;font-size:13px}
+  .nav-btn:hover{background:rgba(255,255,255,.07);color:#fff}.nav-btn.active{background:linear-gradient(90deg,rgba(37,99,235,.95),rgba(59,130,246,.72));color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.16)}
+  .nav-icon{width:20px;text-align:center;font-size:16px}.nav-badge{margin-left:auto;background:#fbbf24;color:#3c2a00;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:800}
+  .sidebar-foot{margin-top:26px;padding:15px 12px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.04)}
+  .sidebar-foot b{font-size:12px}.sidebar-foot p{font-size:11px;line-height:1.55;color:#9db4cf;margin:7px 0 0}
+  .main{min-width:0}.topbar{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:20}
+  .crumb{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px}.crumb strong{color:var(--ink)}
+  .top-actions{display:flex;align-items:center;gap:12px}.icon-btn{width:36px;height:36px;border:1px solid var(--line);background:#fff;border-radius:10px;display:grid;place-items:center;color:#526179}.avatar{width:36px;height:36px;border-radius:50%;background:#dbeafe;color:#1e40af;display:grid;place-items:center;font-weight:800}.user-meta{font-size:12px;line-height:1.35}.user-meta b{display:block}.user-meta span{color:var(--muted)}
+  .content{padding:26px 28px 50px;max-width:1600px;margin:auto}.view{display:none}.view.active{display:block}
+  .hero{background:linear-gradient(128deg,#102b50 0%,#174c83 54%,#2563eb 100%);border-radius:22px;padding:38px 42px;color:#fff;box-shadow:0 20px 45px rgba(13,34,64,.18);position:relative;overflow:hidden}
+  .hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}.hero:before{width:280px;height:280px;right:-80px;top:-120px}.hero:after{width:190px;height:190px;right:180px;bottom:-140px}
+  .eyebrow{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:99px;background:rgba(255,255,255,.13);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}.hero h1{font-size:32px;line-height:1.2;margin:16px 0 8px;max-width:760px}.hero p{margin:0;color:#d7e6f8;font-size:14px;line-height:1.65;max-width:760px}
+  .search-shell{margin-top:27px;background:#fff;padding:8px;border-radius:16px;display:flex;gap:8px;max-width:930px;box-shadow:0 16px 38px rgba(0,0,0,.18);position:relative;z-index:2}.search-shell input{flex:1;border:0;outline:0;padding:13px 15px;font-size:15px;color:var(--ink);min-width:0}.search-shell button{border:0;border-radius:11px;background:var(--blue);color:#fff;padding:0 22px;font-weight:800}.search-shell button:hover{background:var(--blue2)}
+  .quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;position:relative;z-index:2}.quick button{border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.09);color:#fff;border-radius:99px;padding:7px 12px;font-size:12px}.quick button:hover{background:rgba(255,255,255,.18)}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:26px 0 14px}.section-head h2{margin:0;font-size:19px}.section-head p{margin:5px 0 0;color:var(--muted);font-size:13px}.section-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:#fff;color:#334155;padding:9px 13px;border-radius:10px;font-weight:750;font-size:12px}.btn:hover{background:#f8fafc}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.primary:hover{background:var(--blue2)}.btn.soft{background:var(--sky);border-color:#cfe0ff;color:#1d4ed8}.btn.danger{background:var(--redbg);border-color:#fecdd3;color:#a5212d}.btn:disabled{opacity:.45;cursor:not-allowed}
+  .grid{display:grid;gap:14px}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;box-shadow:0 4px 18px rgba(13,34,64,.035)}.card.clickable{cursor:pointer;transition:.2s}.card.clickable:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#c8d8f4}
+  .journey-card{display:flex;gap:13px;align-items:flex-start}.journey-icon{width:42px;height:42px;border-radius:12px;background:var(--sky);color:var(--blue);display:grid;place-items:center;font-size:20px;flex:0 0 auto}.journey-card h3{font-size:14px;margin:1px 0 5px}.journey-card p{font-size:12px;line-height:1.55;color:var(--muted);margin:0}.journey-card a{display:inline-block;margin-top:9px;color:var(--blue);font-size:12px;font-weight:800}
+  .metric{padding:17px}.metric-top{display:flex;align-items:center;justify-content:space-between}.metric-label{font-size:12px;color:var(--muted);font-weight:700}.metric-icon{width:34px;height:34px;border-radius:10px;background:var(--sky);display:grid;place-items:center}.metric-value{font-size:24px;font-weight:850;margin-top:12px}.metric-sub{font-size:11px;color:var(--muted);margin-top:5px}
+  .results-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(330px,.8fr);gap:18px;align-items:start}.sticky-col{position:sticky;top:92px}
+  .result-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:13px}.result-toolbar input,.result-toolbar select,.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 11px;color:var(--ink);outline:0}.result-toolbar input:focus,.result-toolbar select:focus,.field input:focus,.field select:focus,.field textarea:focus{border-color:#93b4f7;box-shadow:0 0 0 3px rgba(37,99,235,.09)}
+  .filter-input{flex:1;min-width:190px}.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:99px;font-size:10px;font-weight:800}.pill.blue{background:var(--sky);color:#1d4ed8}.pill.green{background:var(--greenbg);color:#087d57}.pill.amber{background:var(--amberbg);color:#94600d}.pill.gray{background:#f1f5f9;color:#526179}.pill.red{background:var(--redbg);color:#b42a35}
+  .history-card{padding:0;overflow:hidden;margin-bottom:12px}.history-main{padding:17px}.history-top{display:flex;justify-content:space-between;gap:16px}.history-title{min-width:0}.history-title h3{font-size:14px;margin:6px 0 5px;line-height:1.4}.history-title .meta{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}.score{min-width:64px;text-align:center}.score strong{display:block;font-size:20px;color:var(--green)}.score span{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.06em}
+  .history-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}.stat-cell{background:#f8fafc;border:1px solid #edf2f7;border-radius:9px;padding:9px}.stat-cell label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800}.stat-cell b{display:block;font-size:11px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .why{margin-top:12px;font-size:11px;color:#526179;display:flex;gap:7px;flex-wrap:wrap}.why span{background:#f1f5f9;border-radius:99px;padding:5px 8px}.history-actions{border-top:1px solid var(--line);padding:10px 17px;display:flex;gap:8px;justify-content:flex-end;background:#fbfcfe}
+  .insight-card{margin-bottom:13px}.insight-title{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:850;margin-bottom:12px}.insight-title .dot{width:28px;height:28px;border-radius:9px;background:var(--sky);display:grid;place-items:center}.recommend-big{font-size:17px;font-weight:850}.subtext{font-size:11px;line-height:1.55;color:var(--muted);margin-top:5px}.price-row{display:flex;justify-content:space-between;font-size:11px;margin:8px 0}.price-track{height:9px;background:#e8eef7;border-radius:99px;position:relative;margin:12px 0 7px}.price-range{position:absolute;left:18%;right:14%;height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:99px}.price-marker{position:absolute;left:53%;top:-4px;width:3px;height:17px;background:#0d2240;border-radius:3px}.vendor-list{display:grid;gap:9px}.vendor-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line)}.vendor-row:last-child{border-bottom:0}.vendor-row b{font-size:11px}.vendor-row span{font-size:10px;color:var(--muted);display:block;margin-top:3px}.confidence{display:flex;align-items:center;gap:12px}.confidence-ring{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) 0 var(--pct),#e5e7eb var(--pct) 100%);position:relative}.confidence-ring:before{content:"";position:absolute;inset:6px;background:#fff;border-radius:50%}.confidence-ring b{position:relative;font-size:12px}
+  .empty{text-align:center;padding:48px 20px;border:1px dashed #cbd5e1;border-radius:15px;background:#fff}.empty-icon{font-size:38px}.empty h3{margin:10px 0 5px}.empty p{color:var(--muted);font-size:12px;margin:0;line-height:1.55}
+  .alert{border-radius:12px;padding:12px 13px;font-size:11px;line-height:1.55;display:flex;gap:9px}.alert.info{background:var(--sky);color:#244a82;border:1px solid #cfe0ff}.alert.warn{background:var(--amberbg);color:#7b530e;border:1px solid #f6df9a}.alert.success{background:var(--greenbg);color:#087655;border:1px solid #bdeedc}
+  .page-title h1{font-size:24px;margin:0}.page-title p{font-size:13px;color:var(--muted);margin:6px 0 0}.page-title{margin-bottom:20px}.filters{display:flex;gap:9px;flex-wrap:wrap}.filters input,.filters select{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font-size:12px;outline:0}
+  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}.table{width:100%;border-collapse:collapse;min-width:930px}.table th{position:sticky;top:0;background:#f8fafc;text-align:left;padding:11px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:1px solid var(--line)}.table td{padding:12px;font-size:11px;border-bottom:1px solid #edf2f7;vertical-align:top}.table tr:hover td{background:#fbfdff}.table .name-cell{max-width:320px}.table .name-cell b{display:block;font-size:11px;line-height:1.35}.table .name-cell span{display:block;color:var(--muted);margin-top:4px}
+  .chart-card{min-height:290px}.bars{display:flex;align-items:flex-end;gap:12px;height:190px;padding:20px 8px 0}.bar-col{flex:1;min-width:28px;text-align:center;display:flex;flex-direction:column;justify-content:flex-end;height:100%}.bar{width:100%;max-width:48px;margin:0 auto;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#3b82f6,#1d4ed8);min-height:4px;position:relative}.bar:hover:after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:5px 7px;border-radius:6px;font-size:9px;white-space:nowrap;z-index:4}.bar-col label{font-size:10px;color:var(--muted);margin-top:8px}.rank-list{display:grid;gap:11px}.rank-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:9px;align-items:center}.rank-no{width:24px;height:24px;border-radius:8px;background:#f1f5f9;display:grid;place-items:center;font-size:10px;font-weight:800}.rank-info b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rank-info span{display:block;font-size:9px;color:var(--muted);margin-top:3px}.rank-value{font-size:10px;font-weight:800}.mini-track{height:5px;background:#edf2f7;border-radius:99px;margin-top:6px}.mini-fill{height:100%;background:#3b82f6;border-radius:99px}
+  .form-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.65fr);gap:18px;align-items:start}.form-section{margin-bottom:15px}.form-section h3{font-size:13px;margin:0 0 13px;padding-bottom:10px;border-bottom:1px solid var(--line)}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:10px;font-weight:800;color:#526179;text-transform:uppercase;letter-spacing:.04em}.field textarea{min-height:90px;resize:vertical}.required:after{content:" *";color:#dc2626}.reference-banner{background:var(--sky);border:1px solid #cfe0ff;border-radius:12px;padding:13px;margin-bottom:15px}.reference-banner b{font-size:12px}.reference-banner p{font-size:10px;color:#4d6689;margin:5px 0 0;line-height:1.5}
+  .stepper{display:flex;align-items:center;gap:0;margin:20px 0}.step{display:flex;align-items:center;flex:1}.step-dot{width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#64748b;display:grid;place-items:center;font-size:10px;font-weight:850;flex:0 0 auto}.step.active .step-dot,.step.done .step-dot{background:var(--blue);color:#fff}.step-line{height:2px;background:#e2e8f0;flex:1}.step.done .step-line{background:var(--blue)}.step label{font-size:9px;color:var(--muted);margin-left:6px;white-space:nowrap}.step.active label{color:var(--blue);font-weight:800}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(2,9,20,.55);z-index:100;display:none;align-items:center;justify-content:center;padding:24px}.modal-backdrop.open{display:flex}.modal{background:#fff;border-radius:18px;width:min(980px,100%);max-height:88vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.3)}.modal.small{width:min(720px,100%)}.modal-head{display:flex;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}.modal-head h2{font-size:16px;margin:0}.modal-head p{font-size:11px;color:var(--muted);margin:5px 0 0}.close{border:0;background:#f1f5f9;width:32px;height:32px;border-radius:9px}.modal-body{padding:20px}.modal-foot{padding:13px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:#fff}
+  .detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}.detail-item{padding:11px;background:#f8fafc;border-radius:10px}.detail-item label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:800}.detail-item b{display:block;font-size:11px;margin-top:5px;word-break:break-word}.items-table{width:100%;border-collapse:collapse}.items-table th,.items-table td{border-bottom:1px solid var(--line);padding:9px;text-align:left;font-size:10px}.items-table th{background:#f8fafc;color:var(--muted);text-transform:uppercase;font-size:9px}
+  .compare-dock{position:fixed;left:calc(256px + 50%);transform:translateX(-50%);bottom:18px;z-index:50;background:#0d2240;color:#fff;border-radius:14px;padding:10px 12px;display:none;align-items:center;gap:12px;box-shadow:0 20px 45px rgba(0,0,0,.25)}.compare-dock.show{display:flex}.compare-dock span{font-size:11px}.compare-dock button{border:0;border-radius:9px;padding:8px 12px;font-size:10px;font-weight:800}.toast{position:fixed;right:24px;bottom:24px;background:#10233f;color:#fff;padding:12px 15px;border-radius:11px;font-size:11px;box-shadow:0 14px 34px rgba(0,0,0,.25);z-index:200;opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}.toast.show{opacity:1;transform:translateY(0)}
+  .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:12px}.spinner{width:20px;height:20px;border:2px solid #cbd5e1;border-top-color:var(--blue);border-radius:50%;animation:spin .75s linear infinite;margin-right:9px}@keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:1150px){.grid-4{grid-template-columns:repeat(2,1fr)}.results-layout,.form-layout{grid-template-columns:1fr}.sticky-col{position:static}.history-stats{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:820px){.app{grid-template-columns:1fr}.sidebar{display:none}.content{padding:18px}.topbar{padding:0 18px}.hero{padding:28px 22px}.hero h1{font-size:25px}.grid-3,.grid-2,.grid-4{grid-template-columns:1fr}.search-shell{flex-direction:column}.search-shell button{padding:13px}.form-grid{grid-template-columns:1fr}.detail-grid{grid-template-columns:repeat(2,1fr)}.compare-dock{left:50%}.user-meta{display:none}}
+
+/* ── PCA additions ── */
+.data-gate{position:fixed;inset:0;background:rgba(245,247,251,.96);backdrop-filter:blur(4px);z-index:150;display:flex;align-items:center;justify-content:center;padding:24px}
+.data-gate.hide{display:none}
+.gate-card{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);max-width:520px;width:100%;padding:34px;text-align:center}
+.gate-mark{width:54px;height:54px;border-radius:15px;background:linear-gradient(135deg,#60a5fa,#2563eb);display:grid;place-items:center;margin:0 auto 16px;box-shadow:0 10px 24px rgba(37,99,235,.3)}
+.gate-card h2{font-size:22px;margin:0 0 8px}
+.gate-card>p{color:var(--muted);font-size:13px;margin:0 0 20px;line-height:1.6}
+.dropzone{display:block;border:2px dashed #c3d0ea;border-radius:15px;padding:30px;cursor:pointer;transition:.2s;background:#f7f9ff}
+.dropzone:hover,.dropzone.dov{border-color:var(--blue);background:#eef3ff}
+.dz-ico{font-size:34px}
+.gate-note{margin-top:14px;font-size:11px;color:var(--muted)}
+.gate-note code{background:#eef3ff;color:var(--blue2);padding:2px 7px;border-radius:5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.gate-status{margin-top:12px;font-size:12px;color:var(--muted);min-height:18px}
+/* subtabs */
+.subtabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.subtab{padding:9px 15px;font-size:13px;font-weight:750;color:var(--muted);border:0;background:transparent;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px}
+.subtab:hover{color:var(--ink)}
+.subtab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.subtab .cnt{font-size:10px;background:#eef3ff;color:var(--blue);border-radius:99px;padding:1px 7px;margin-left:5px;font-weight:800}
+/* vendor */
+.vendor-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.vendor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.vendor-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:.2s;box-shadow:0 4px 18px rgba(13,34,64,.035)}
+.vendor-card:hover{transform:translateY(-2px);border-color:#b8c8ec;box-shadow:var(--shadow)}
+.vendor-card.sel{border-color:var(--blue);box-shadow:0 0 0 3px #edf2ff}
+.vendor-top{display:flex;justify-content:space-between;align-items:flex-start}
+.vendor-ico{width:40px;height:40px;border-radius:11px;background:var(--sky);display:grid;place-items:center;font-size:19px}
+.vendor-score{font-size:12px;font-weight:850;color:var(--amber)}
+.vendor-nm{font-size:13px;font-weight:800;margin:11px 0 3px;line-height:1.35}
+.vendor-no{font-size:10px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.vendor-figs{display:flex;gap:20px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+.vendor-fig b{display:block;font-size:14px}
+.vendor-fig span{font-size:10px;color:var(--muted)}
+.detail-panel{position:sticky;top:92px;padding:18px}
+.perf-row{display:flex;gap:8px;margin-top:8px}
+.perf-item{flex:1;background:#f8fafd;border:1px solid #edf2f7;border-radius:10px;padding:10px;text-align:center}
+.perf-item span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.04em}
+.perf-item b{display:block;font-size:16px;color:var(--blue2);margin-top:4px}
+.detail-line{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12px}
+.detail-line:last-child{border-bottom:0}
+.detail-line span{color:var(--muted)}
+/* contract */
+.contract-card{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px;background:#fff}
+.contract-card .top{display:flex;justify-content:space-between;gap:10px}
+.contract-no{font-size:10px;color:var(--blue);font-family:ui-monospace,monospace}
+.contract-nm{font-size:12px;font-weight:800;margin-top:2px}
+.contract-meta{font-size:10px;color:var(--muted);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+.progress-track{height:6px;background:#e9edf5;border-radius:6px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:var(--green);border-radius:6px;transition:width .4s}
+.progress-fill.warn{background:var(--amber)}.progress-fill.danger{background:var(--red)}
+.prog-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:8px}
+/* approval */
+.appr-card{border:1px solid var(--line);border-radius:13px;background:#fff;overflow:hidden;margin-bottom:11px;box-shadow:0 4px 18px rgba(13,34,64,.035)}
+.appr-main{padding:15px 17px;display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.appr-h3{font-size:14px;margin:5px 0 5px}
+.appr-meta{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap}
+.appr-val{text-align:right;white-space:nowrap}
+.appr-val b{font-size:16px}
+.appr-foot{border-top:1px solid var(--line);background:#fbfcfe;padding:11px 17px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.appr-note{flex:1;min-width:180px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12px;outline:0}
+.appr-note:focus{border-color:#93b4f7;box-shadow:0 0 0 3px rgba(37,99,235,.09)}
+.decided-note{font-size:11px;color:var(--muted);font-style:italic;flex:1}
+.project-links{display:none}
+/* insight & opportunity */
+.insight-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.insight-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 18px rgba(13,34,64,.035)}
+.insight-ico{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:20px;color:#fff;margin-bottom:14px}
+.ic-blue{background:#2563eb}.ic-purple{background:#7c3aed}.ic-green{background:#0f9f6e}.ic-orange{background:#f97316}.ic-indigo{background:#4f46e5}
+.insight-card h3{font-size:14px;margin:0 0 8px}
+.insight-card .desc{font-size:11.5px;color:var(--muted);line-height:1.55;min-height:58px}
+.insight-card .big{font-size:22px;font-weight:850;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.insight-card .big small{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:3px}
+.big.blue{color:#2563eb}.big.purple{color:#7c3aed}.big.green{color:#0f9f6e}.big.orange{color:#f97316}.big.indigo{color:#4f46e5}
+.opp-card{padding:18px;display:flex;flex-direction:column}
+.opp-top{display:flex;gap:13px;align-items:flex-start}
+.opp-thumb{width:58px;height:58px;border-radius:12px;background:var(--sky);display:grid;place-items:center;font-size:26px;flex:0 0 auto}
+.opp-top h3{font-size:15px;margin:0 0 5px;line-height:1.3}
+.opp-top p{font-size:11.5px;color:var(--muted);margin:0;line-height:1.5}
+.opp-est{border-radius:12px;padding:13px 15px;margin:14px 0;display:flex;justify-content:space-between;align-items:center}
+.opp-est.blue{background:#eff4ff;border:1px solid #d9e5ff}.opp-est.green{background:#eafaf3;border:1px solid #cdeede}
+.opp-est .lbl{font-size:11px;font-weight:700}.opp-est.blue .lbl{color:#2563eb}.opp-est.green .lbl{color:#0f9f6e}
+.opp-est .val{font-size:22px;font-weight:850;margin-top:2px}.opp-est.blue .val{color:#1d4ed8}.opp-est.green .val{color:#0c7a54}
+.opp-est .pct{font-size:11px;color:var(--muted);margin-top:2px}
+.opp-est .arrow{font-size:22px}.opp-est.blue .arrow{color:#2563eb}.opp-est.green .arrow{color:#0f9f6e}
+.opp-rec b{font-size:12px}.opp-rec p{font-size:11.5px;color:var(--muted);line-height:1.5;margin:6px 0 14px}
+.opp-actions{display:flex;gap:8px;margin-top:auto}.opp-actions .btn{flex:1;justify-content:center}
+.start-saving{padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.ss-star{width:44px;height:44px;border-radius:11px;background:#eef3ff;color:#2563eb;display:grid;place-items:center;font-size:20px;flex:0 0 auto}
+/* risk analysis */
+.risk-context{padding:14px 18px;display:grid;grid-template-columns:repeat(5,1fr) auto;gap:16px;align-items:center}
+.rc-item .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+.rc-item .val{font-size:14px;font-weight:800;margin-top:3px}
+.risk-kpi{padding:16px;position:relative;overflow:hidden}
+.risk-kpi .k-lbl{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.03em}
+.risk-kpi .k-big{font-size:22px;font-weight:850;margin-top:8px}
+.risk-kpi .k-sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+.gauge{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;position:absolute;right:14px;top:50%;transform:translateY(-50%)}
+.gauge:before{content:"";position:absolute;inset:8px;background:#fff;border-radius:50%}
+.gauge b{position:relative;font-size:19px;font-weight:850}
+.risk-hi{color:#dc2626}.risk-md{color:#f97316}.risk-lo{color:#16a34a}
+.risk-donut{width:150px;height:150px;border-radius:50%;position:relative;flex:0 0 auto}
+.risk-donut:after{content:"";position:absolute;inset:34px;background:#fff;border-radius:50%}
+.risk-legend{display:grid;gap:0;flex:1;min-width:0}
+.rl-row{display:grid;grid-template-columns:12px 1fr auto;gap:9px;align-items:center;font-size:12px;padding:6px 0}
+.rl-dot{width:10px;height:10px;border-radius:3px}
+.rl-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.b-hi{background:#fdeaea;color:#dc2626}.b-md{background:#fff2e5;color:#c2570c}.b-lo{background:#e9f9ef;color:#137a3a}
+.risk-list .rl-item{display:grid;grid-template-columns:22px 1fr auto auto 28px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}
+.risk-list .rl-item:last-child{border:0}
+.risk-rank{width:22px;height:22px;border-radius:7px;background:#f1f5f9;display:grid;place-items:center;font-size:10px;font-weight:800}
+.heatmap{display:grid;grid-template-columns:70px repeat(5,1fr);gap:5px;align-items:stretch}
+.hm-cell{aspect-ratio:1.5;border-radius:7px;display:grid;place-items:center;position:relative}
+.hm-yaxis{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-size:10px;color:var(--muted);font-weight:700;padding-right:6px;text-align:right;line-height:1.2}
+.hm-xaxis{font-size:10px;color:var(--muted);font-weight:700;text-align:center;padding-top:5px}
+.hm-marker{width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid #0f172a;display:grid;place-items:center;font-size:11px;font-weight:850;color:#0f172a;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.hm-z1{background:#d7f2df}.hm-z2{background:#fbeeb6}.hm-z3{background:#f9d9a8}.hm-z4{background:#f2a97f}.hm-z5{background:#e8765b}
+@media(max-width:1150px){.vendor-layout{grid-template-columns:1fr}.vendor-grid{grid-template-columns:repeat(2,1fr)}.detail-panel{position:static}.insight-grid{grid-template-columns:repeat(2,1fr)}.risk-context{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:820px){.vendor-grid{grid-template-columns:1fr}.subtabs{overflow:auto}.insight-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">eP</div><div><strong>Price Catalog</strong><span>Procurement Intelligence</span></div></div>
+    <div class="nav-title">Workspace</div>
+    <button class="nav-btn active" data-view="guided"><span class="nav-icon">⌕</span> Guided Procurement <span class="nav-badge">NEW</span></button>
+    <button class="nav-btn" data-view="draft"><span class="nav-icon">＋</span> Buat Pengadaan</button>
+    <button class="nav-btn" data-view="history"><span class="nav-icon">▤</span> Daftar Pengadaan</button>
+    <button class="nav-btn" data-view="report"><span class="nav-icon">◫</span> Report & Analytics</button>
+    <div class="nav-title">Proses</div>
+    <button class="nav-btn" data-view="approval"><span class="nav-icon">✓</span> Persetujuan <span class="nav-badge" id="apprBadge" style="display:none">0</span></button>
+    <button class="nav-btn" data-view="vendor"><span class="nav-icon">▱</span> Evaluasi Vendor</button>
+    <button class="nav-btn" data-view="master"><span class="nav-icon">⌘</span> Master Data</button>
+    <div class="nav-title">Analitik</div>
+    <button class="nav-btn" data-view="efisiensi"><span class="nav-icon">◇</span> Peluang Efisiensi</button>
+    <button class="nav-btn" data-view="risk"><span class="nav-icon">⚠</span> Risk Analysis</button>
+    <div class="nav-title">Aset &amp; Otomasi</div>
+    <button class="nav-btn" data-view="asset"><span class="nav-icon">🏷</span> Aset &amp; Investasi</button>
+    <button class="nav-btn" data-view="serapan"><span class="nav-icon">📊</span> Serapan &amp; Belanja</button>
+    <button class="nav-btn" data-view="otomasi"><span class="nav-icon">⟳</span> Otomasi &amp; Peringatan</button>
+    <div class="sidebar-foot"><b>Prototype Mode</b><p>Ditenagai histori e-Pengadaan dari CSV. Sistem memberi referensi & analitik, bukan keputusan otomatis. AI summary memakai statistik lokal (tanpa API).</p></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="crumb"><span>e-Pengadaan</span><span>/</span><strong id="crumbTitle">Guided Procurement</strong></div>
+      <div class="top-actions"><span class="pill gray" id="dsLabel">Belum ada data</span><input type="file" id="fileInput" accept=".csv" hidden><button class="btn" id="importBtn">Impor CSV</button><div class="avatar">DA</div><div class="user-meta"><b>Demo User</b><span>Procurement Requester</span></div></div>
+    </header>
+    <div class="content">
+      <section class="view active" id="view-guided">
+        <div class="hero">
+          <span class="eyebrow">✦ Smart Guided Procurement</span>
+          <h1>Apa yang ingin Anda adakan?</h1>
+          <p>Ceritakan kebutuhan dengan bahasa biasa. Sistem akan mencari pengadaan serupa, benchmark harga, vendor historis, dan metode yang pernah digunakan.</p>
+          <div class="search-shell"><input id="mainSearch" placeholder="Contoh: laptop untuk tim operasional, sewa kendaraan, jasa kalibrasi..." autocomplete="off"/><button id="mainSearchBtn">Cari Referensi</button></div>
+          <div class="quick"><button data-q="laptop">Laptop</button><button data-q="toner printer">Toner printer</button><button data-q="sewa kendaraan">Sewa kendaraan</button><button data-q="jasa kalibrasi">Jasa kalibrasi</button><button data-q="alat pelindung diri">APD</button></div>
+        </div>
+        <div id="guidedLanding">
+          <div class="section-head"><div><h2>Mulai berdasarkan kebutuhan</h2><p>Search-first, lalu sistem membantu mengarahkan proses pengadaan.</p></div></div>
+          <div class="grid grid-4">
+            <div class="card journey-card clickable" data-q="pengadaan laptop"><div class="journey-icon">▣</div><div><h3>Barang & Peralatan</h3><p>Cari referensi barang, spesifikasi, harga satuan, dan vendor historis.</p><a>Mulai pencarian</a></div></div>
+            <div class="card journey-card clickable" data-q="jasa kalibrasi"><div class="journey-icon">⚙</div><div><h3>Jasa Profesional</h3><p>Temukan pengadaan jasa sebelumnya beserta nilai dan metodenya.</p><a>Mulai pencarian</a></div></div>
+            <div class="card journey-card clickable" data-q="sewa kendaraan"><div class="journey-icon">⌁</div><div><h3>Sewa & Operasional</h3><p>Bandingkan histori sewa berdasarkan periode, vendor, dan nilai.</p><a>Mulai pencarian</a></div></div>
+            <div class="card journey-card clickable" data-q="jasa konstruksi"><div class="journey-icon">⌂</div><div><h3>Konstruksi</h3><p>Lihat referensi proyek konstruksi dan jalur pengadaan yang digunakan.</p><a>Mulai pencarian</a></div></div>
+          </div>
+          <div class="section-head"><div><h2>Yang dapat dibantu sistem</h2><p>Rekomendasi tetap menyertakan sumber histori dan alasan pencocokan.</p></div></div>
+          <div class="grid grid-3">
+            <div class="card journey-card"><div class="journey-icon">⌕</div><div><h3>Pengadaan Serupa</h3><p>Menelusuri nama kebutuhan, item, deskripsi, kategori, unit, dan vendor dalam histori.</p></div></div>
+            <div class="card journey-card"><div class="journey-icon">Rp</div><div><h3>Benchmark Harga</h3><p>Menampilkan rentang, median, serta konteks tahun dari harga historis yang relevan.</p></div></div>
+            <div class="card journey-card"><div class="journey-icon">✓</div><div><h3>Guided Recommendation</h3><p>Menyarankan kategori, metode, dan referensi vendor tanpa otomatis memilih pemenang.</p></div></div>
+          </div>
+        </div>
+        <div id="guidedResults" style="display:none">
+          <div class="section-head"><div><h2 id="resultHeading">Hasil rekomendasi</h2><p id="resultSub"></p></div><div class="section-actions"><button class="btn" id="resetSearch">Pencarian Baru</button><button class="btn" id="analyzeRisk">⚠ Analisis Risiko</button><button class="btn primary" id="createFromSearch">Buat Pengadaan</button></div></div>
+          <div class="results-layout">
+            <div>
+              <div class="result-toolbar"><input class="filter-input" id="resultFilter" placeholder="Filter hasil rekomendasi..."/><select id="resultYear"><option value="all">Semua Tahun</option></select><select id="resultType"><option value="all">Semua Jenis</option><option>Barang</option><option>Jasa</option><option>Jasa Konstruksi</option></select></div>
+              <div id="resultList"></div>
+            </div>
+            <aside class="sticky-col" id="insightPanel"></aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-draft">
+        <div class="page-title"><h1>Buat Pengadaan Baru</h1><p>Form existing e-Pengadaan dengan referensi hasil Guided Procurement.</p></div>
+        <div class="stepper"><div class="step active"><div class="step-dot">1</div><label>Kebutuhan</label><div class="step-line"></div></div><div class="step"><div class="step-dot">2</div><label>Spesifikasi</label><div class="step-line"></div></div><div class="step"><div class="step-dot">3</div><label>Anggaran</label><div class="step-line"></div></div><div class="step"><div class="step-dot">4</div><label>Review</label></div></div>
+        <div class="form-layout">
+          <div class="card">
+            <div id="referenceBanner"></div>
+            <div class="form-section"><h3>Informasi Kebutuhan</h3><div class="form-grid">
+              <div class="field full"><label class="required">Nama Pengadaan</label><input id="fName" placeholder="Masukkan nama pengadaan"/></div>
+              <div class="field"><label class="required">Jenis Pengadaan</label><select id="fType"><option value="">Pilih jenis</option><option>Barang</option><option>Jasa</option><option>Jasa Konstruksi</option></select></div>
+              <div class="field"><label>Kelompok Pengadaan</label><select id="fGroup"><option value="">Pilih kelompok</option><option>RUTIN</option><option>PROYEK</option><option>INVESTASI</option></select></div>
+              <div class="field"><label>Direktorat / Unit</label><select id="fDir"><option value="">Pilih unit</option></select></div>
+              <div class="field"><label>Metode Pengadaan</label><select id="fMethod"><option value="">Belum ditentukan</option><option>Pengadaan Langsung</option><option>Penunjukan Langsung</option><option>Tender/Seleksi Terbatas</option><option>Tender/Seleksi Umum</option></select></div>
+              <div class="field full"><label class="required">Deskripsi Kebutuhan</label><textarea id="fDesc" placeholder="Jelaskan kebutuhan dan tujuan pengadaan"></textarea></div>
+            </div></div>
+            <div class="form-section"><h3>Estimasi dan Spesifikasi Awal</h3><div class="form-grid">
+              <div class="field"><label>Estimasi Nilai Pengadaan</label><input id="fValue" type="number" placeholder="0"/></div>
+              <div class="field"><label>Target Selesai</label><input id="fDate" type="date"/></div>
+              <div class="field full"><label>Spesifikasi Awal</label><textarea id="fSpec" placeholder="Spesifikasi dapat disalin dari referensi lalu disesuaikan"></textarea></div>
+            </div></div>
+            <div style="display:flex;justify-content:flex-end;gap:9px"><button class="btn" id="saveDraft">Simpan Draft</button><button class="btn primary" id="continueDraft">Lanjutkan</button></div>
+          </div>
+          <aside class="sticky-col"><div class="card insight-card"><div class="insight-title"><span class="dot">✦</span> Panduan sistem</div><div id="draftGuidance" class="subtext">Gunakan Guided Procurement untuk memilih referensi. Data historis hanya menjadi acuan, bukan pengganti validasi kebutuhan dan harga pasar saat ini.</div></div><div class="alert warn">⚠ Vendor historis tidak otomatis dimasukkan sebagai vendor pilihan. Proses evaluasi dan aturan pengadaan tetap mengikuti kebijakan organisasi.</div></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-history">
+        <div class="page-title"><h1>Daftar Pengadaan</h1><p>Telusuri histori pengadaan dari data yang dimuat dan buka detail sebagai referensi.</p></div>
+        <div class="section-head"><div class="filters"><input id="histSearch" placeholder="Cari nama, nomor, item, vendor..." style="min-width:280px"/><select id="histYear"><option value="all">Semua Tahun</option></select><select id="histType"><option value="all">Semua Jenis</option><option>Barang</option><option>Jasa</option><option>Jasa Konstruksi</option></select><select id="histStatus"><option value="all">Semua Status</option></select></div><div class="section-actions"><button class="btn" id="exportHistory">Export CSV</button></div></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Pengadaan</th><th>Tahun</th><th>Jenis</th><th>Unit</th><th>Vendor</th><th>Nilai</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span id="histCount" class="subtext"></span><div class="section-actions"><button class="btn" id="histPrev">Sebelumnya</button><button class="btn" id="histNext">Berikutnya</button></div></div>
+      </section>
+
+      <section class="view" id="view-report">
+        <div class="page-title"><h1>Report & Analytics</h1><p>Ringkasan histori e-Pengadaan yang mendukung pengambilan keputusan dan pencarian referensi.</p></div>
+        <div class="section-head"><div class="filters"><select id="reportYear"><option value="all">Semua Tahun</option></select><select id="reportType"><option value="all">Semua Jenis</option><option>Barang</option><option>Jasa</option><option>Jasa Konstruksi</option></select><select id="reportDir"><option value="all">Semua Direktorat</option></select></div><button class="btn" id="exportReport">Export Ringkasan</button></div>
+        <div class="grid grid-4" id="reportMetrics"></div>
+        <div class="grid grid-2" style="margin-top:15px"><div class="card chart-card"><div class="section-head" style="margin:0"><div><h2>Tren Nilai Pengadaan</h2><p>Nilai unik per nomor pengadaan.</p></div></div><div class="bars" id="yearBars"></div></div><div class="card chart-card"><div class="section-head" style="margin:0 0 14px"><div><h2>Top Vendor</h2><p>Berdasarkan akumulasi nilai pengadaan.</p></div></div><div class="rank-list" id="topVendors"></div></div></div>
+        <div class="grid grid-2" style="margin-top:15px"><div class="card"><div class="section-head" style="margin:0 0 14px"><div><h2>Metode Pengadaan</h2><p>Distribusi metode pada data terfilter.</p></div></div><div class="rank-list" id="methodRanks"></div></div><div class="card"><div class="section-head" style="margin:0 0 14px"><div><h2>Unit / Direktorat</h2><p>Unit dengan nilai pengadaan terbesar.</p></div></div><div class="rank-list" id="dirRanks"></div></div></div>
+      </section>
+
+      <section class="view" id="view-approval">
+        <div class="page-title"><h1>Persetujuan</h1><p>Antrian pengadaan yang menunggu keputusan. Setujui atau tolak dengan catatan reviewer.</p></div>
+        <div class="grid grid-4" id="apprMetrics" style="margin-bottom:16px"></div>
+        <div class="subtabs" id="apprTabs">
+          <button class="subtab active" data-atab="menunggu">Menunggu <span class="cnt" id="cntMenunggu">0</span></button>
+          <button class="subtab" data-atab="disetujui">Disetujui <span class="cnt" id="cntDisetujui">0</span></button>
+          <button class="subtab" data-atab="ditolak">Ditolak <span class="cnt" id="cntDitolak">0</span></button>
+        </div>
+        <div class="section-head" style="margin:0 0 12px"><div class="filters"><input id="apprSearch" placeholder="Cari nama, nomor, vendor..." style="min-width:280px"/></div></div>
+        <div id="apprList"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span id="apprCount" class="subtext"></span><div class="section-actions"><button class="btn" id="apprPrev">Sebelumnya</button><button class="btn" id="apprNext">Berikutnya</button></div></div>
+      </section>
+
+      <section class="view" id="view-vendor">
+        <div class="page-title"><h1>Evaluasi Vendor &amp; Kontrak</h1><p>Profil vendor, performa, dan kontrak aktif yang diturunkan dari histori pengadaan.</p></div>
+        <div class="grid grid-4" id="vendorMetrics" style="margin-bottom:16px"></div>
+        <div class="section-head" style="margin:0 0 12px"><div class="filters"><input id="vendorSearch" placeholder="Cari vendor..." style="min-width:280px"/><select id="vendorSort"><option value="cnt">Urut: Transaksi terbanyak</option><option value="val">Urut: Nilai terbesar</option><option value="score">Urut: Rating tertinggi</option></select></div><span id="vendorCount" class="subtext"></span></div>
+        <div class="vendor-layout">
+          <div>
+            <div class="vendor-grid" id="vendorGrid"></div>
+            <div style="display:flex;justify-content:center;margin-top:14px"><button class="btn" id="vendorMore">Muat lebih banyak</button></div>
+          </div>
+          <aside class="sticky-col">
+            <div class="card detail-panel" id="vendorDetail"><div class="empty" style="border:0;padding:24px 8px"><div class="empty-icon">▱</div><h3>Pilih Vendor</h3><p>Klik salah satu kartu vendor untuk melihat profil, performa, dan item yang sering diadakan.</p></div></div>
+            <div class="card" style="margin-top:14px;padding:16px">
+              <div class="section-head" style="margin:0 0 12px"><div><h2 style="font-size:14px">Kontrak Aktif</h2><p>Simulasi realisasi kontrak.</p></div><button class="btn small" id="addContract">+ Kontrak</button></div>
+              <div id="contractList"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-master">
+        <div class="page-title"><h1>Master Data</h1><p>Referensi data induk yang diturunkan dari histori pengadaan (read-only).</p></div>
+        <div class="grid grid-4" id="masterMetrics" style="margin-bottom:16px"></div>
+        <div class="subtabs" id="masterTabs">
+          <button class="subtab active" data-mtab="vendor">Vendor</button>
+          <button class="subtab" data-mtab="item">Item</button>
+          <button class="subtab" data-mtab="kategori">Kategori</button>
+          <button class="subtab" data-mtab="metode">Metode</button>
+          <button class="subtab" data-mtab="unit">Unit / Direktorat</button>
+        </div>
+        <div class="section-head" style="margin:0 0 12px"><div class="filters"><input id="masterSearch" placeholder="Cari..." style="min-width:280px"/></div><button class="btn" id="exportMaster">Export CSV</button></div>
+        <div class="table-wrap"><table class="table"><thead id="masterHead"></thead><tbody id="masterBody"></tbody></table></div>
+        <div style="margin-top:10px"><span id="masterCount" class="subtext"></span></div>
+      </section>
+
+      <section class="view" id="view-efisiensi">
+        <div class="page-title" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div><h1>Insight &amp; Opportunity</h1><p>Peluang penghematan &amp; efisiensi belanja dari seluruh histori pengadaan.</p></div><button class="btn primary" id="planAllEff">📋 Buat Rencana Aksi</button></div>
+        <div class="insight-grid" id="insightGrid"></div>
+        <div style="margin:26px 0 4px"><h2 style="font-size:18px;margin:0">Peluang Efisiensi</h2><p class="subtext" style="margin-top:4px">Rekomendasi peluang untuk mengoptimalkan pengeluaran dan meningkatkan efisiensi.</p></div>
+        <div class="grid grid-3" id="oppGrid" style="margin-top:14px"></div>
+        <div class="card start-saving" style="margin-top:18px"><div><div style="display:flex;align-items:center;gap:12px"><div class="ss-star">★</div><div><b style="font-size:15px">Mulai hemat sekarang</b><p class="subtext" style="margin:3px 0 0">Buat rencana aksi untuk rekomendasi di atas dan pantau realisasi efisiensi secara berkala.</p></div></div></div><button class="btn primary" id="planAllEff2">📋 Buat Rencana Aksi</button></div>
+      </section>
+
+      <section class="view" id="view-risk">
+        <div id="riskEmpty" class="empty" style="margin-top:20px"><div class="empty-icon">⚠</div><h3>Analisis Risiko Pengadaan</h3><p>Masukkan kata kunci pengadaan untuk menganalisis risiko harga, vendor, pengiriman, spesifikasi, dan kepatuhan.</p><div class="search-shell" style="max-width:520px;margin:18px auto 0;box-shadow:0 8px 24px rgba(0,0,0,.1)"><input id="riskSearchInput" placeholder="Contoh: laptop, sewa kendaraan, jasa audit..."/><button id="riskSearchBtn">Analisis</button></div></div>
+        <div id="riskReport" style="display:none">
+          <div class="page-title" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div><h1>Risk Analysis</h1><p id="riskSubtitle">Analisis risiko untuk pengadaan</p></div><div class="section-actions"><button class="btn" id="riskExport">⭳ Export Laporan</button><button class="btn primary" id="riskMitigate">＋ Buat Rencana Mitigasi</button></div></div>
+          <div class="card risk-context" id="riskContext"></div>
+          <div class="grid grid-4" id="riskKpis" style="margin:16px 0"></div>
+          <div class="subtabs" id="riskTabs">
+            <button class="subtab active" data-rtab="ringkasan">Ringkasan</button>
+            <button class="subtab" data-rtab="detail">Risiko Detail</button>
+            <button class="subtab" data-rtab="peta">Peta Risiko</button>
+            <button class="subtab" data-rtab="trend">Trend &amp; Historis</button>
+            <button class="subtab" data-rtab="benchmark">Benchmark</button>
+            <button class="subtab" data-rtab="rekomendasi">Rekomendasi</button>
+          </div>
+          <div id="riskTabBody"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-asset">
+        <div class="page-title" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px"><div><h1>Aset &amp; Investasi Proyek</h1><p>Ubah pengeluaran proyek menjadi aset tercatat — pantau kontribusi, pemegang, dan status idle.</p></div><button class="btn primary" id="assetExport">⭳ Export Aset</button></div>
+        <div class="grid grid-4" id="assetMetrics" style="margin-bottom:16px"></div>
+        <div class="subtabs" id="assetTabs">
+          <button class="subtab active" data-atab2="registri">Registri Aset</button>
+          <button class="subtab" data-atab2="konversi">Kontribusi &amp; Konversi</button>
+          <button class="subtab" data-atab2="pemegang">Pemegang Aset</button>
+          <button class="subtab" data-atab2="idle">Deteksi Idle</button>
+        </div>
+        <div class="section-head" style="margin:0 0 12px"><div class="filters"><input id="assetSearch" placeholder="Cari aset, proyek, pemegang..." style="min-width:280px"/></div><span id="assetCount" class="subtext"></span></div>
+        <div id="assetBody"></div>
+      </section>
+
+      <section class="view" id="view-serapan">
+        <div class="page-title"><h1>Serapan &amp; Analisis Belanja</h1><p>Pantau penyerapan anggaran, pola sewa vs beli, dan selisih harga tidak wajar.</p></div>
+        <div class="grid grid-4" id="serapanMetrics" style="margin-bottom:16px"></div>
+        <div class="subtabs" id="serapanTabs">
+          <button class="subtab active" data-stab2="serapan">Serapan Anggaran</button>
+          <button class="subtab" data-stab2="sewabeli">Sewa vs Beli</button>
+          <button class="subtab" data-stab2="pricegap">Price Gap</button>
+        </div>
+        <div id="serapanBody"></div>
+      </section>
+
+      <section class="view" id="view-otomasi">
+        <div class="page-title"><h1>Otomasi &amp; Peringatan</h1><p>Saran perpanjangan pengadaan berulang (RPA) dan ringkasan proaktif seperti Google Analytics.</p></div>
+        <div class="grid grid-4" id="digestMetrics" style="margin-bottom:16px"></div>
+        <div class="grid grid-2" style="align-items:start">
+          <div class="card" style="padding:18px"><div class="section-head" style="margin:0 0 12px"><div><h2 style="font-size:15px">Peringatan &amp; Digest</h2><p class="subtext">Anomali &amp; kondisi yang perlu tindakan.</p></div></div><div id="digestList"></div></div>
+          <div class="card" style="padding:18px"><div class="section-head" style="margin:0 0 12px"><div><h2 style="font-size:15px">Pengadaan Berulang (RPA)</h2><p class="subtext">Kandidat perpanjangan — prefill draft otomatis.</p></div></div><div id="recurringList"></div></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="data-gate" id="dataGate">
+  <div class="gate-card">
+    <div class="gate-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="26"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/></svg></div>
+    <h2>Muat Data Pengadaan</h2>
+    <p>Aplikasi ini membaca histori pengadaan dari file CSV. Seret file ke bawah atau pilih manual untuk mulai.</p>
+    <label class="dropzone" id="dropzone"><input type="file" id="gateFile" accept=".csv" hidden><div class="dz-ico">📂</div><div style="font-weight:800;margin-top:8px">Seret &amp; letakkan CSV di sini</div><div style="font-size:11px;color:var(--muted);margin-top:3px">atau klik untuk memilih file</div></label>
+    <div class="gate-note">Format kolom titik-koma (;). Benchmark: <code>dummy_pengadaan_40k.csv</code></div>
+    <div class="gate-status" id="gateStatus"></div>
+  </div>
+</div>
+
+<div class="compare-dock" id="compareDock"><span id="compareText">0 pengadaan dipilih</span><button id="openCompare">Bandingkan</button><button id="clearCompare">Bersihkan</button></div>
+<div class="modal-backdrop" id="detailModal"><div class="modal"><div class="modal-head"><div><h2 id="detailTitle"></h2><p id="detailSub"></p></div><button class="close" data-close="detailModal">×</button></div><div class="modal-body" id="detailBody"></div><div class="modal-foot"><button class="btn" data-close="detailModal">Tutup</button><button class="btn primary" id="useDetailRef">Gunakan sebagai Referensi</button></div></div></div>
+<div class="modal-backdrop" id="compareModal"><div class="modal"><div class="modal-head"><div><h2>Perbandingan Pengadaan</h2><p>Bandingkan konteks sebelum memilih referensi.</p></div><button class="close" data-close="compareModal">×</button></div><div class="modal-body" id="compareBody"></div><div class="modal-foot"><button class="btn" data-close="compareModal">Tutup</button></div></div></div>
+<div class="modal-backdrop" id="contractModal"><div class="modal small"><div class="modal-head"><div><h2>Kontrak Baru</h2><p>Catat kontrak untuk vendor terpilih.</p></div><button class="close" data-close="contractModal">×</button></div><div class="modal-body"><div class="form-grid"><div class="field"><label class="required">Nomor Kontrak</label><input id="ctNo" placeholder="KTR-2026-001"/></div><div class="field"><label class="required">Nama Kontrak</label><input id="ctNm" placeholder="Pekerjaan / pengadaan"/></div><div class="field full"><label class="required">Vendor</label><input id="ctVendor" placeholder="Nama vendor"/></div><div class="field"><label class="required">Nilai Kontrak</label><input id="ctNilai" type="number" placeholder="0"/></div><div class="field"><label>Realisasi</label><input id="ctReal" type="number" placeholder="0"/></div><div class="field"><label>Mulai</label><input id="ctDari" type="date"/></div><div class="field"><label>Selesai</label><input id="ctSampai" type="date"/></div></div></div><div class="modal-foot"><button class="btn" data-close="contractModal">Batal</button><button class="btn primary" id="saveContract">Simpan Kontrak</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== DATA LAYER (CSV import + seeder hook) ===================== */
+let DATA=[], VENDORS={}, YEARS=[], DIRECTORATES=[], STATUSES=[];
+/* SEEDER HOOK: to ship data embedded (no import needed), set SEED_DATA to an array
+   of grouped pengadaan objects (same shape groupRows() returns). Leave null to import. */
+const SEED_DATA=null;
+const DEFAULT_CSV='dummy_pengadaan_40k.csv';
+const APP={apprState:{},apprTab:'menunggu',apprPage:1,vendorSel:null,vendorShown:24,contracts:[],masterTab:'vendor'};
+
+const pNum=v=>{const n=Number(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;};
+const yearOf=d=>{const m=String(d||'').match(/(19|20)\d{2}/);return m?+m[0]:0;};
+const uniq=a=>[...new Set(a)];
+function jsStr(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+/* Self-contained CSV parser — delimiter ';', quote-aware. No external dependency. */
+function parseCSV(text){
+  text=String(text).replace(/^﻿/,'');const rows=[];let row=[],field='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){field+='"';i++;}else q=false;}else field+=c;}
+    else if(c==='"')q=true;
+    else if(c===';'){row.push(field);field='';}
+    else if(c==='\n'){row.push(field);rows.push(row);row=[];field='';}
+    else if(c!=='\r')field+=c;}
+  if(field.length||row.length){row.push(field);rows.push(row);}
+  return rows;
+}
+function csvToObjects(text){const rows=parseCSV(text);if(rows.length<2)return[];const H=rows[0].map(h=>h.trim());return rows.slice(1).filter(r=>r.length>1).map(r=>{const o={};H.forEach((h,i)=>o[h]=r[i]);return o;});}
+function groupRows(objs){
+  const map=new Map();
+  objs.forEach(r=>{
+    const id=(r['Nomor Pengadaan']||'').trim();if(!id)return;let o=map.get(id);
+    if(!o){o={id,date:(r['Tanggal Pengadaan']||'').trim(),year:yearOf(r['Tanggal Pengadaan']),name:(r['Nama Pengadaan']||'').trim(),ppbj:(r['Nomor PPBJ']||'').trim(),group:(r['Kelompok Pengadaan']||'').trim(),type:(r['Jenis Pengadaan']||'').trim(),requesterCode:(r['Pemohon']||'').trim(),requester:(r['Nama Pemohon']||'').trim(),requestValue:pNum(r['Nilai Pengajuan']),method:(r['Metode Pengadaan']||'').trim(),value:pNum(r['Nilai Pengadaan']),vendorNo:(r['Vendor No']||'').trim(),vendor:(r['Vendor Name']||'').trim(),toolType:(r['Tipe Alat']||'').trim(),projectCode:(r['Project Code']||'').trim(),directorate:(r['Direktorat Code']||'').trim(),status:(r['Status']||'').trim(),docStatus:(r['Status Dokumen']||'').trim(),estimateFinish:(r['Estimasi Tanggal Selesai']||'').trim(),approveDate:(r['Tanggal Approve Pengadaan']||'').trim(),items:[]};map.set(id,o);}
+    const inm=(r['Nama Item']||'').trim();
+    if(inm||r['Harga Item'])o.items.push({name:inm,desc:(r['Deskripsi Item']||'').trim(),qty:pNum(r['Qty Item']),volume:pNum(r['Volume Item'])||1,price:pNum(r['Harga Item'])});
+  });
+  return[...map.values()];
+}
+function buildIndex(){
+  DATA.forEach(r=>{const itemNames=r.items.map(x=>x.name).join(' '),desc=r.items.map(x=>x.desc).join(' ');r._name=norm(r.name);r._items=norm(itemNames);r._desc=norm(desc);r._meta=norm([r.type,r.group,r.vendor,r.directorate,r.requesterCode].join(' '));r._all=[r._name,r._items,r._desc,r._meta,norm(r.id)].join(' ');});
+  YEARS=uniq(DATA.map(x=>x.year).filter(Boolean)).sort();
+  DIRECTORATES=uniq(DATA.map(x=>x.directorate).filter(Boolean)).sort();
+  STATUSES=uniq(DATA.map(x=>x.status).filter(Boolean)).sort();
+}
+function buildVendors(){
+  VENDORS={};
+  DATA.forEach(r=>{const nm=r.vendor;if(!nm)return;let v=VENDORS[nm];if(!v)v=VENDORS[nm]={nm,no:r.vendorNo,cnt:0,totalNilai:0,items:new Set(),statuses:{},years:new Set()};v.cnt++;v.totalNilai+=r.value||r.requestValue||0;r.items.forEach(i=>i.name&&v.items.add(i.name));v.statuses[r.status]=(v.statuses[r.status]||0)+1;if(r.year)v.years.add(r.year);});
+  Object.values(VENDORS).forEach(v=>{v.itemsArr=[...v.items];v.avg=v.cnt?v.totalNilai/v.cnt:0;});
+}
+const vScore=nm=>3.5+((nm.length*7)%15)/10;
+const vDelivery=nm=>Math.min(99,78+((nm.length*3)%20));
+const vQuality=nm=>Math.min(99,80+((nm.charCodeAt(0)||0)%18));
+
+function bootData(data){
+  if(!data||!data.length){gateStatus('Data kosong / format tidak dikenali.','err');return;}
+  DATA=data;
+  APP.apprState={};APP.apprTab='menunggu';APP.apprPage=1;APP.vendorSel=null;APP.vendorShown=24;APP.contracts=[];APP.masterTab='vendor';APP.assetTab='registri';APP.serapanTab='serapan';histPage=1;
+  RISK=null;const re=document.getElementById('riskReport'),rem=document.getElementById('riskEmpty');if(re){re.style.display='none';rem.style.display='block';}
+  buildIndex();buildVendors();fillOptions();
+  document.getElementById('dataGate').classList.add('hide');
+  const ds=document.getElementById('dsLabel');ds.textContent=fmt.format(DATA.length)+' pengadaan';ds.className='pill green';
+  const active=document.querySelector('.nav-btn.active')?.dataset.view||'guided';
+  renderHistory();renderReport();updateApprBadge();
+  if(active==='vendor')renderVendors();else if(active==='approval')renderApproval();else if(active==='master')renderMaster();else if(active==='efisiensi')renderEfisiensi();else if(active==='asset')renderAsset();else if(active==='serapan')renderSerapan();else if(active==='otomasi')renderOtomasi();
+  ['guidedLanding'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='block';});
+}
+function gateStatus(msg,kind){const el=document.getElementById('gateStatus');if(el){el.textContent=msg;el.style.color=kind==='err'?'var(--red)':'var(--muted)';}}
+function ingestText(text,src){try{gateStatus('Memproses '+(src||'CSV')+'…');const data=groupRows(csvToObjects(text));bootData(data);if(DATA.length)toast('Dimuat: '+fmt.format(DATA.length)+' pengadaan ('+fmt.format(data.reduce((a,b)=>a+b.items.length,0))+' baris item).');}catch(e){console.error(e);gateStatus('Gagal membaca file: '+e.message,'err');}}
+function ingestFile(file){if(!file)return;gateStatus('Membaca '+file.name+'…');const rd=new FileReader();rd.onload=e=>ingestText(e.target.result,file.name);rd.onerror=()=>gateStatus('Gagal membuka file.','err');rd.readAsText(file);}
+async function autoLoad(){
+  if(SEED_DATA&&SEED_DATA.length){bootData(SEED_DATA);toast('Data seeder dimuat.');return;}
+  try{const res=await fetch(DEFAULT_CSV);if(!res.ok)throw new Error('HTTP '+res.status);gateStatus('Memuat '+DEFAULT_CSV+'…');ingestText(await res.text(),DEFAULT_CSV);}
+  catch(e){gateStatus('Impor CSV manual untuk mulai (auto-load hanya jika dijalankan via server lokal).');}
+}
+const metricCard=x=>`<div class="card metric"><div class="metric-top"><span class="metric-label">${x[0]}</span><span class="metric-icon">${x[3]}</span></div><div class="metric-value">${x[1]}</div><div class="metric-sub">${x[2]}</div></div>`;
+
+/* ===================== PERSETUJUAN (approval) ===================== */
+function apprPending(){return DATA.filter(r=>r.status==='Penilaian');}
+function updateApprBadge(){const n=apprPending().filter(r=>!APP.apprState[r.id]).length;const b=document.getElementById('apprBadge');if(b){b.textContent=n;b.style.display=n?'inline-block':'none';}}
+function renderApproval(){
+  const base=apprPending(),q=norm(document.getElementById('apprSearch').value);
+  const menunggu=base.filter(r=>!APP.apprState[r.id]);
+  const disetujui=base.filter(r=>APP.apprState[r.id]&&APP.apprState[r.id].status==='approved');
+  const ditolak=base.filter(r=>APP.apprState[r.id]&&APP.apprState[r.id].status==='rejected');
+  document.getElementById('cntMenunggu').textContent=fmt.format(menunggu.length);
+  document.getElementById('cntDisetujui').textContent=fmt.format(disetujui.length);
+  document.getElementById('cntDitolak').textContent=fmt.format(ditolak.length);
+  document.getElementById('apprMetrics').innerHTML=[['Menunggu',fmt.format(menunggu.length),'Status “Penilaian”','✓'],['Nilai Tertahan',shortRp(sumBy(menunggu,r=>r.value||r.requestValue)),'Akumulasi menunggu','Rp'],['Disetujui',fmt.format(disetujui.length),'Sesi ini','✓'],['Ditolak',fmt.format(ditolak.length),'Sesi ini','✕']].map(metricCard).join('');
+  let list=APP.apprTab==='menunggu'?menunggu:APP.apprTab==='disetujui'?disetujui:ditolak;
+  if(q)list=list.filter(r=>r._all.includes(q));
+  const per=15,pages=Math.max(1,Math.ceil(list.length/per));APP.apprPage=Math.min(APP.apprPage,pages);
+  const rows=list.slice((APP.apprPage-1)*per,APP.apprPage*per);
+  document.getElementById('apprList').innerHTML=rows.length?rows.map(apprCard).join(''):'<div class="empty"><div class="empty-icon">✓</div><h3>Tidak ada item</h3><p>Tidak ada pengadaan pada tab ini.</p></div>';
+  document.getElementById('apprCount').textContent=`Menampilkan ${rows.length} dari ${fmt.format(list.length)} · Halaman ${APP.apprPage}/${pages}`;
+  document.getElementById('apprPrev').disabled=APP.apprPage<=1;document.getElementById('apprNext').disabled=APP.apprPage>=pages;
+  updateApprBadge();
+}
+function apprCard(r){
+  const st=APP.apprState[r.id];
+  const foot=st?`<div class="appr-foot"><span class="pill ${st.status==='approved'?'green':'red'}">${st.status==='approved'?'Disetujui':'Ditolak'}</span><span class="decided-note">${st.note?esc(st.note):'Tanpa catatan'}</span><button class="btn" onclick="undoAppr('${jsStr(r.id)}')">Batalkan</button></div>`
+    :`<div class="appr-foot"><input class="appr-note" id="note-${esc(r.id)}" placeholder="Catatan reviewer (opsional)"/><button class="btn danger" onclick="decideAppr('${jsStr(r.id)}','rejected')">Tolak</button><button class="btn primary" onclick="decideAppr('${jsStr(r.id)}','approved')">Setujui</button></div>`;
+  return `<div class="appr-card"><div class="appr-main"><div><span class="pill ${r.type==='Barang'?'blue':r.type==='Jasa'?'green':'amber'}">${esc(r.type||'-')}</span><h3 class="appr-h3">${esc(r.name||r.id)}</h3><div class="appr-meta"><span>${esc(r.id)}</span><span>•</span><span>${esc(r.directorate||'-')}</span><span>•</span><span>${esc(r.vendor||'Vendor belum ditetapkan')}</span><span>•</span><span>${esc(r.method||'-')}</span></div></div><div class="appr-val"><b>${shortRp(r.value||r.requestValue)}</b><div style="font-size:10px;color:var(--muted)">${r.items.length} item · ${r.year}</div><button class="btn small" style="margin-top:6px" onclick="openDetail('${jsStr(r.id)}')">Detail</button></div></div>${foot}</div>`;
+}
+function decideAppr(id,status){const el=document.getElementById('note-'+id);const note=(el&&el.value||'').trim();APP.apprState[id]={status,note};renderApproval();toast(status==='approved'?'Pengadaan disetujui.':'Pengadaan ditolak.');}
+function undoAppr(id){delete APP.apprState[id];renderApproval();}
+
+/* ===================== EVALUASI VENDOR & KONTRAK ===================== */
+function vendorSorted(){
+  const q=norm(document.getElementById('vendorSearch').value),sort=document.getElementById('vendorSort').value;
+  let arr=Object.values(VENDORS);if(q)arr=arr.filter(v=>norm(v.nm).includes(q));
+  arr.sort((a,b)=>sort==='val'?b.totalNilai-a.totalNilai:sort==='score'?vScore(b.nm)-vScore(a.nm):b.cnt-a.cnt);
+  return arr;
+}
+function renderVendors(){
+  const arr=vendorSorted(),all=Object.values(VENDORS),totalVal=all.reduce((a,v)=>a+v.totalNilai,0);
+  document.getElementById('vendorMetrics').innerHTML=[['Total Vendor',fmt.format(all.length),'Vendor unik','▱'],['Total Nilai',shortRp(totalVal),'Akumulasi transaksi','Rp'],['Avg Transaksi/Vendor',fmt.format(Math.round(all.reduce((a,v)=>a+v.cnt,0)/Math.max(1,all.length))),'Rata-rata','▤'],['Kontrak Aktif',fmt.format(APP.contracts.length),'Sesi ini','◫']].map(metricCard).join('');
+  const icons=['🏭','🏢','🔧','🚛','💼','🏗️','⚙️','📦','🔩','🎯','📡','🛠️'];
+  const shown=arr.slice(0,APP.vendorShown);
+  document.getElementById('vendorGrid').innerHTML=shown.map((v,i)=>`<div class="vendor-card ${APP.vendorSel===v.nm?'sel':''}" onclick="selectVendor('${jsStr(v.nm)}')"><div class="vendor-top"><div class="vendor-ico">${icons[i%icons.length]}</div><div class="vendor-score">★ ${vScore(v.nm).toFixed(1)}</div></div><div class="vendor-nm">${esc(v.nm)}</div><div class="vendor-no">${esc(v.no||'-')}</div><div class="vendor-figs"><div class="vendor-fig"><b>${fmt.format(v.cnt)}</b><span>transaksi</span></div><div class="vendor-fig"><b>${shortRp(v.avg)}</b><span>avg nilai</span></div></div></div>`).join('')||'<div class="empty" style="grid-column:1/-1"><div class="empty-icon">▱</div><h3>Vendor tidak ditemukan</h3></div>';
+  document.getElementById('vendorCount').textContent=`Menampilkan ${fmt.format(shown.length)} dari ${fmt.format(arr.length)} vendor`;
+  document.getElementById('vendorMore').style.display=shown.length<arr.length?'inline-flex':'none';
+  renderContracts();
+}
+function selectVendor(nm){
+  APP.vendorSel=nm;renderVendors();const v=VENDORS[nm];if(!v)return;
+  const statusList=Object.entries(v.statuses).sort((a,b)=>b[1]-a[1]).map(([s,c])=>`<div class="detail-line"><span>${esc(s||'-')}</span><b>${c}</b></div>`).join('');
+  const topItems=v.itemsArr.slice(0,6);
+  document.getElementById('vendorDetail').innerHTML=`<h2 style="font-size:15px;margin:0 0 4px">${esc(nm)}</h2><div style="display:flex;gap:6px;margin-bottom:12px"><span class="pill green">Aktif</span><span class="pill gray">${fmt.format(v.cnt)} transaksi</span></div><div class="detail-line"><span>Nomor Vendor</span><b style="font-family:ui-monospace,monospace">${esc(v.no||'-')}</b></div><div class="detail-line"><span>Total Nilai</span><b style="color:var(--green)">${fmtRp(v.totalNilai)}</b></div><div class="detail-line"><span>Avg / Transaksi</span><b>${fmtRp(v.avg)}</b></div><div class="detail-line"><span>Tahun Aktif</span><b>${[...v.years].sort().join(', ')||'-'}</b></div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.04em;margin:14px 0 6px">Performa Vendor</div><div class="perf-row"><div class="perf-item"><span>Rating</span><b>${vScore(nm).toFixed(1)}</b></div><div class="perf-item"><span>Delivery</span><b>${vDelivery(nm)}%</b></div><div class="perf-item"><span>Kualitas</span><b>${vQuality(nm)}%</b></div></div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.04em;margin:14px 0 6px">Status Pengadaan</div>${statusList}${topItems.length?`<div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.04em;margin:14px 0 6px">Item Sering Diadakan</div>${topItems.map(it=>`<div class="detail-line"><span>${esc(it)}</span></div>`).join('')}`:''}<button class="btn" style="width:100%;justify-content:center;margin-top:14px" onclick="vendorToSearch('${jsStr(nm)}')">🔍 Lihat di Guided Procurement</button>`;
+}
+function vendorToSearch(nm){showView('guided');doSearch(nm);}
+function renderContracts(){
+  const el=document.getElementById('contractList');
+  if(!APP.contracts.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Belum ada kontrak. Klik “+ Kontrak”.</div>';return;}
+  el.innerHTML=APP.contracts.map(c=>{const pct=c.nilai>0?Math.min(100,Math.round(c.realisasi/c.nilai*100)):0,cls=pct>90?'danger':pct>70?'warn':'';return `<div class="contract-card"><div class="top"><div><div class="contract-no">${esc(c.no)}</div><div class="contract-nm">${esc(c.nm)}</div></div><span class="pill green">Aktif</span></div><div class="contract-meta"><span>🏢 ${esc(c.vendor)}</span><span>📅 ${esc(c.dari||'-')} – ${esc(c.sampai||'-')}</span></div><div class="prog-lbl"><span>Realisasi ${pct}%</span><span>${shortRp(c.realisasi)} / ${shortRp(c.nilai)}</span></div><div class="progress-track"><div class="progress-fill ${cls}" style="width:${pct}%"></div></div></div>`;}).join('');
+}
+function saveContract(){
+  const g=id=>document.getElementById(id).value;
+  const no=g('ctNo').trim(),nm=g('ctNm').trim(),vendor=g('ctVendor').trim(),nilai=pNum(g('ctNilai')),real=pNum(g('ctReal')),dari=g('ctDari'),sampai=g('ctSampai');
+  if(!no||!nm||!vendor||!nilai){toast('Lengkapi field wajib (nomor, nama, vendor, nilai).');return;}
+  APP.contracts.push({no,nm,vendor,nilai,realisasi:real,dari,sampai});closeModal('contractModal');renderContracts();renderVendors();toast('Kontrak ditambahkan.');
+  ['ctNo','ctNm','ctVendor','ctNilai','ctReal','ctDari','ctSampai'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ===================== MASTER DATA ===================== */
+function masterData(tab){
+  if(tab==='vendor'){const arr=Object.values(VENDORS).sort((a,b)=>b.totalNilai-a.totalNilai);return{cols:['Vendor','Nomor','Transaksi','Total Nilai'],rows:arr.map(v=>[v.nm,v.no||'-',fmt.format(v.cnt),fmtRp(v.totalNilai)]),raw:arr.map(v=>({Vendor:v.nm,Nomor:v.no,Transaksi:v.cnt,'Total Nilai':v.totalNilai}))};}
+  if(tab==='item'){const m={};DATA.forEach(r=>r.items.forEach(i=>{if(!i.name)return;let o=m[i.name]||(m[i.name]={name:i.name,cnt:0,prices:[]});o.cnt++;if(i.price>0)o.prices.push(i.price);}));const arr=Object.values(m).sort((a,b)=>b.cnt-a.cnt);return{cols:['Item','Frekuensi','Harga Min','Median','Harga Max'],rows:arr.map(o=>[o.name,fmt.format(o.cnt),fmtRp(o.prices.length?Math.min(...o.prices):0),fmtRp(median(o.prices)),fmtRp(o.prices.length?Math.max(...o.prices):0)]),raw:arr.map(o=>({Item:o.name,Frekuensi:o.cnt,Median:median(o.prices)}))};}
+  if(tab==='kategori'){const m={};DATA.forEach(r=>{const k=(r.group||'-')+' · '+(r.type||'-');let o=m[k]||(m[k]={k,cnt:0,val:0});o.cnt++;o.val+=r.value||r.requestValue;});const arr=Object.values(m).sort((a,b)=>b.val-a.val);return{cols:['Kelompok · Jenis','Jumlah Pengadaan','Total Nilai'],rows:arr.map(o=>[o.k,fmt.format(o.cnt),fmtRp(o.val)]),raw:arr.map(o=>({Kategori:o.k,Jumlah:o.cnt,'Total Nilai':o.val}))};}
+  if(tab==='metode'){const m={};DATA.forEach(r=>{const k=r.method||'-';let o=m[k]||(m[k]={k,cnt:0,val:0});o.cnt++;o.val+=r.value||r.requestValue;});const arr=Object.values(m).sort((a,b)=>b.cnt-a.cnt);return{cols:['Metode','Jumlah Pengadaan','Total Nilai'],rows:arr.map(o=>[o.k,fmt.format(o.cnt),fmtRp(o.val)]),raw:arr.map(o=>({Metode:o.k,Jumlah:o.cnt,'Total Nilai':o.val}))};}
+  const m={};DATA.forEach(r=>{const k=r.directorate||'-';let o=m[k]||(m[k]={k,cnt:0,val:0});o.cnt++;o.val+=r.value||r.requestValue;});const arr=Object.values(m).sort((a,b)=>b.val-a.val);return{cols:['Unit / Direktorat','Jumlah Pengadaan','Total Nilai'],rows:arr.map(o=>[o.k,fmt.format(o.cnt),fmtRp(o.val)]),raw:arr.map(o=>({Unit:o.k,Jumlah:o.cnt,'Total Nilai':o.val}))};
+}
+function renderMaster(){
+  const d=masterData(APP.masterTab),q=norm(document.getElementById('masterSearch').value);
+  let rows=d.rows;if(q)rows=rows.filter(r=>norm(r.join(' ')).includes(q));
+  APP._masterRaw=d.raw;
+  document.getElementById('masterMetrics').innerHTML=[['Vendor',fmt.format(Object.keys(VENDORS).length),'Vendor unik','▱'],['Pengadaan',fmt.format(DATA.length),'Nomor unik','▤'],['Item Unik',fmt.format(uniq(DATA.flatMap(r=>r.items.map(i=>i.name)).filter(Boolean)).length),'Nama item','📦'],['Unit',fmt.format(DIRECTORATES.length),'Direktorat','◫']].map(metricCard).join('');
+  document.getElementById('masterHead').innerHTML='<tr>'+d.cols.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr>';
+  const cap=rows.slice(0,500);
+  document.getElementById('masterBody').innerHTML=cap.map(r=>'<tr>'+r.map((c,i)=>`<td${i===0?' class="name-cell"':''}>${i===0?'<b>'+esc(c)+'</b>':esc(c)}</td>`).join('')+'</tr>').join('')||`<tr><td colspan="${d.cols.length}"><div class="empty" style="border:0">Tidak ada data</div></td></tr>`;
+  document.getElementById('masterCount').textContent=`Menampilkan ${fmt.format(cap.length)} dari ${fmt.format(rows.length)} baris`+(rows.length>500?' (dibatasi 500 teratas)':'');
+}
+
+/* ===================== PELUANG EFISIENSI (gambar 1) ===================== */
+const effCategory=r=>{const it=r.items.find(x=>x.name);return it?it.name:(r.type||'Lainnya');};
+function iconFor(name){const n=String(name).toLowerCase();if(/laptop|komputer|pc|notebook/.test(n))return'💻';if(/atk|kertas|toner|tinta|printer/.test(n))return'📦';if(/kendaraan|mobil|motor|sewa/.test(n))return'🚗';if(/genset|listrik|panel|oli/.test(n))return'⚡';if(/jasa|audit|konsultan|kalibrasi/.test(n))return'🧰';return'📦';}
+function computeEfisiensi(){
+  const total=sumBy(DATA,r=>r.value||r.requestValue);
+  const catSpend={},catVendors={};
+  DATA.forEach(r=>{const val=r.value||r.requestValue,cat=effCategory(r);catSpend[cat]=(catSpend[cat]||0)+val;(catVendors[cat]=catVendors[cat]||new Set()).add(r.vendor);});
+  const cats=Object.entries(catSpend).sort((a,b)=>b[1]-a[1]);const topCat=cats[0]||['-',0];
+  const vend=Object.values(VENDORS).sort((a,b)=>b.totalNilai-a.totalNilai);const top3=vend.slice(0,3).reduce((a,v)=>a+v.totalNilai,0);
+  const itemPrices={};DATA.forEach(r=>r.items.forEach(i=>{if(i.name&&i.price>0)(itemPrices[i.name]=itemPrices[i.name]||[]).push(i.price);}));
+  const itemMed={};Object.entries(itemPrices).forEach(([k,a])=>itemMed[k]=median(a));
+  let benchCount=0,benchSave=0,anomSave=0;
+  DATA.forEach(r=>r.items.forEach(i=>{if(!i.name||!(i.price>0))return;const med=itemMed[i.name];if(med&&i.price>med){const excess=(i.price-med)*(i.qty||1);benchCount++;benchSave+=excess;if(i.price>med*1.25)anomSave+=excess;}}));
+  const consol=cats.filter(([c])=>(catVendors[c]&&catVendors[c].size||0)>3);
+  return{total,topCat,topCatPct:total?topCat[1]/total*100:0,top3,top3Pct:total?top3/total*100:0,benchCount,benchSave,anomSave,anomPct:total?anomSave/total*100:0,consolCount:consol.length,cats,catVendors};
+}
+function effOpportunities(e){
+  const opps=[],itemAgg={};
+  DATA.forEach(r=>r.items.forEach(i=>{if(!i.name)return;const o=itemAgg[i.name]||(itemAgg[i.name]={cnt:0,units:new Set(),val:0,method:{}});o.cnt++;o.units.add(r.directorate);o.val+=(i.price||0)*(i.qty||1);o.method[r.method]=(o.method[r.method]||0)+1;}));
+  const items=Object.entries(itemAgg).map(([k,o])=>({k,cnt:o.cnt,units:o.units.size,val:o.val,method:o.method}));
+  const rep=items.filter(o=>o.units>=2&&o.cnt>=4).sort((a,b)=>b.val-a.val)[0];
+  if(rep)opps.push({icon:iconFor(rep.k),title:`Pembelian ${rep.k} Berulang di Banyak Unit`,desc:`Terdapat ${fmt.format(rep.cnt)} transaksi pembelian ${rep.k.toLowerCase()} di ${rep.units} unit dengan total nilai ${shortRp(rep.val)}.`,est:rep.val*0.12,estPct:12,estNote:'dari total kategori',rec:`Konsolidasikan kebutuhan ${rep.k.toLowerCase()} melalui pengadaan terpadu untuk mendapatkan harga yang lebih kompetitif.`});
+  const ml=items.filter(o=>o!==rep).map(o=>({...o,langsung:(o.method['Pengadaan Langsung']||0)+(o.method['Penunjukan Langsung']||0)})).filter(o=>o.langsung>=4).sort((a,b)=>b.val-a.val)[0];
+  if(ml)opps.push({icon:iconFor(ml.k),title:`${ml.k} Sering Dibeli via Pengadaan Langsung`,desc:`Pembelian ${ml.k.toLowerCase()} senilai ${shortRp(ml.val)} banyak lewat pengadaan langsung, padahal bisa lewat kontrak/e-katalog.`,est:ml.val*0.2,estPct:20,estNote:'dari pembelian langsung',rec:`Arahkan pembelian ${ml.k.toLowerCase()} ke kontrak resmi atau e-katalog untuk memaksimalkan kepatuhan dan diskon.`});
+  const jasa=DATA.filter(r=>r.type==='Jasa');
+  if(jasa.length){const ju=new Set(jasa.map(r=>r.directorate)),jv=sumBy(jasa,r=>r.value||r.requestValue);opps.push({icon:'👥',title:'Belanja Jasa Bisa Dikonsolidasi',desc:`Belanja jasa tersebar di ${ju.size} unit dengan total nilai ${shortRp(jv)}.`,est:jv*0.11,estPct:11,estNote:'dari total kategori',rec:'Konsolidasikan belanja jasa melalui unit pusat untuk meningkatkan kontrol dan daya tawar harga.'});}
+  let ci=0;while(opps.length<3&&ci<e.cats.length){const[c,v]=e.cats[ci++];if(opps.some(o=>o.title.includes(c)))continue;opps.push({icon:iconFor(c),title:`Optimasi Kategori ${c}`,desc:`Kategori ${c.toLowerCase()} bernilai ${shortRp(v)}.`,est:v*0.1,estPct:10,estNote:'dari total kategori',rec:`Tinjau strategi pengadaan ${c.toLowerCase()} untuk peluang penghematan.`});}
+  return opps.slice(0,3);
+}
+function renderEfisiensi(){
+  const e=computeEfisiensi();
+  document.getElementById('insightGrid').innerHTML=[
+    {ico:'🛒',cls:'blue',t:'Kategori Tertinggi',d:`${esc(e.topCat[0])} menyumbang ${e.topCatPct.toFixed(1).replace('.',',')}% dari total pengeluaran.`,big:shortRp(e.topCat[1]),bl:'Total Spend'},
+    {ico:'📈',cls:'purple',t:'Konsentrasi Vendor',d:`Top 03 vendor menyumbang ${e.top3Pct.toFixed(1).replace('.',',')}% dari total spend.`,big:shortRp(e.top3),bl:'Total Spend'},
+    {ico:'📄',cls:'green',t:'Kesempatan Benchmark',d:`Terdapat ${fmt.format(e.benchCount)} transaksi di atas harga acuan benchmark.`,big:shortRp(e.benchSave),bl:'Potensi Savings'},
+    {ico:'⚠️',cls:'orange',t:'Anomali Market Spend',d:`${shortRp(e.anomSave)} (${e.anomPct.toFixed(1).replace('.',',')}%) terpantau lebih tinggi dari harga pasar sejenis.`,big:shortRp(e.anomSave),bl:'Potensi Savings'},
+    {ico:'🎯',cls:'indigo',t:'Peluang Konsolidasi',d:`${e.consolCount} kategori dapat dikonsolidasikan ke lebih sedikit vendor untuk meningkatkan daya tawar.`,big:e.consolCount+' Kategori',bl:'Untuk Dikonsolidasi'}
+  ].map(c=>`<div class="insight-card"><div class="insight-ico ic-${c.cls}">${c.ico}</div><h3>${c.t}</h3><div class="desc">${c.d}</div><div class="big ${c.cls}">${c.big}<small>${c.bl}</small></div></div>`).join('');
+  const opps=effOpportunities(e);
+  document.getElementById('oppGrid').innerHTML=opps.map((o,i)=>{const col=i===1?'green':'blue';return `<div class="card opp-card"><div class="opp-top"><div class="opp-thumb">${o.icon}</div><div><h3>${esc(o.title)}</h3><p>${esc(o.desc)}</p></div></div><div class="opp-est ${col}"><div><div class="lbl">Estimasi Potensi Efisiensi</div><div class="val">${shortRp(o.est)}</div><div class="pct">(${o.estPct}% ${esc(o.estNote)})</div></div><div class="arrow">↗</div></div><div class="opp-rec"><b>Rekomendasi</b><p>${esc(o.rec)}</p></div><div class="opp-actions"><button class="btn" onclick="toast('Membuka rincian rekomendasi (prototype).')">Lihat Rekomendasi</button><button class="btn primary" onclick="toast('Rencana aksi dibuat (prototype).')">Buat Rencana →</button></div></div>`;}).join('');
+}
+
+/* ===================== RISK ANALYSIS (gambar 2) ===================== */
+let RISK=null, riskTab='ringkasan';
+const hashStr=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;};
+const dParse=s=>{const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?new Date(+m[3],+m[2]-1,+m[1]):null;};
+const rStat=arr=>{const n=arr.length;if(!n)return{mean:0,cv:0};const mean=arr.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(arr.reduce((a,b)=>a+(b-mean)**2,0)/n);return{mean,cv:mean?sd/mean:0};};
+const riskLevel=s=>s>=70?'Tinggi':s>=45?'Sedang':'Rendah';
+const riskCls=s=>s>=70?'hi':s>=45?'md':'lo';
+function riskMatched(q){const ts=tokens(q);if(!ts.length)return[];return DATA.filter(r=>ts.some(t=>r._all.includes(t)));}
+function computeRisk(q){
+  const M=riskMatched(q),prices=[];M.forEach(r=>r.items.forEach(i=>{if(i.price>0)prices.push(i.price);}));
+  const totalNilai=sumBy(M,r=>r.value||r.requestValue),ps=rStat(prices);
+  const vspend=groupSum(M,'vendor',r=>r.value||r.requestValue),vv=Object.values(vspend).sort((a,b)=>b-a),top3Share=totalNilai?vv.slice(0,3).reduce((a,b)=>a+b,0)/totalNilai*100:0;
+  const belum=M.filter(r=>r.docStatus&&r.docStatus!=='Sudah Lengkap').length;
+  const leads=[];M.forEach(r=>{const a=dParse(r.date),b=dParse(r.estimateFinish);if(a&&b){const d=(b-a)/864e5;if(d>0&&d<400)leads.push(d);}});const ls=rStat(leads);
+  const descs=new Set();let icnt=0;M.forEach(r=>r.items.forEach(i=>{if(i.name){icnt++;descs.add(i.desc);}}));const specRatio=icnt?descs.size/icnt:0;
+  // Skor 0-100: sinyal nyata (harga=volatilitas, kepatuhan=% dok belum lengkap, vendor=konsentrasi) di-blend
+  // dengan komponen deterministik per-kata-kunci (seed) untuk dimensi bersinyal lemah pada data ini.
+  const seed=hashStr(norm(q)),sA=seed%23,sB=(seed>>5)%27,sC=(seed>>10)%22,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const harga=cl(Math.round(38+(ps.cv-2)*17),20,94),vendor=cl(Math.round(top3Share*2.4+sA),15,88),pengiriman=cl(Math.round(30+(ls.mean-100)/6+sB),20,90),spesifikasi=cl(Math.round(28+specRatio*220+sC),18,85),kepatuhan=cl(Math.round(M.length?belum/M.length*100:0),5,90);
+  const estHike=Math.round(harga*0.3);
+  const dims=[
+    {key:'Harga',score:harga,impact:5,root:'Volatilitas kurs, inflasi komponen',dampak:'Kenaikan biaya hingga '+estHike+'%',rek:'Monitor harga pasar, pertimbangkan kontrak jangka panjang'},
+    {key:'Vendor',score:vendor,impact:4,root:'Ketergantungan pada sedikit vendor utama',dampak:'Gangguan pasokan jika vendor bermasalah',rek:'Diversifikasi vendor, kualifikasi vendor alternatif'},
+    {key:'Pengiriman',score:pengiriman,impact:3,root:'Lead time panjang, kendala logistik',dampak:'Keterlambatan proyek dan operasional',rek:'Buffer time, monitor status pengiriman real-time'},
+    {key:'Spesifikasi',score:spesifikasi,impact:3,root:'Perubahan kebutuhan/teknologi cepat',dampak:'Revisi pengadaan, tambahan biaya',rek:'Kelola perubahan, dokumentasi kebutuhan jelas'},
+    {key:'Kepatuhan',score:kepatuhan,impact:2,root:'Kelengkapan dokumen kurang',dampak:'Risiko hukum, denda, keterlambatan',rek:'Audit kepatuhan berkala, lengkapi dokumen'}
+  ];
+  const w={Harga:.28,Vendor:.24,Pengiriman:.2,Spesifikasi:.12,Kepatuhan:.16},overall=Math.round(dims.reduce((a,d)=>a+d.score*w[d.key],0));
+  const yrs=[...new Set(M.map(r=>r.year).filter(Boolean))].sort();let trend='Stabil',trendPct=0;
+  if(yrs.length>=2){const byYr={};M.forEach(r=>r.items.forEach(i=>{if(i.price>0)(byYr[r.year]=byYr[r.year]||[]).push(i.price);}));const f=byYr[yrs[0]],l=byYr[yrs[yrs.length-1]];if(f&&l){const mf=f.reduce((a,b)=>a+b,0)/f.length,ml=l.reduce((a,b)=>a+b,0)/l.length;trendPct=mf?Math.round((ml-mf)/mf*100):0;trend=trendPct>5?'Meningkat':trendPct<-5?'Menurun':'Stabil';}}
+  return{q,M,dims,overall,hiCount:dims.filter(d=>d.score>=70).length,totalNilai,count:M.length,years:yrs,trend,trendPct,confidence:Math.min(96,Math.round(45+Math.log10(Math.max(1,M.length))*18)),category:Object.entries(countBy(M,'type')).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-',prices};
+}
+function doRiskAnalysis(q){q=(q||'').trim();if(q.length<2){toast('Masukkan minimal 2 karakter.');return;}const R=computeRisk(q);if(!R.count){toast('Tidak ada transaksi cocok untuk “'+q+'”.');return;}RISK=R;riskTab='ringkasan';document.getElementById('riskEmpty').style.display='none';document.getElementById('riskReport').style.display='block';document.querySelectorAll('#riskTabs .subtab').forEach(x=>x.classList.toggle('active',x.dataset.rtab==='ringkasan'));renderRisk();}
+function backToRiskSearch(){document.getElementById('riskReport').style.display='none';document.getElementById('riskEmpty').style.display='block';document.getElementById('riskSearchInput').value=RISK?RISK.q:'';}
+function renderRisk(){
+  const R=RISK;if(!R)return;
+  document.getElementById('riskSubtitle').textContent=`Analisis risiko untuk pengadaan “${R.q}”`;
+  const per=R.years.length?`${R.years[0]} – ${R.years[R.years.length-1]}`:'-';
+  document.getElementById('riskContext').innerHTML=[['🔎 Kata kunci',esc(R.q)],['Kategori',esc(R.category)],['Periode Analisis',per],['Total Transaksi',fmt.format(R.count)],['Total Nilai',shortRp(R.totalNilai)]].map(x=>`<div class="rc-item"><div class="lbl">${x[0]}</div><div class="val">${x[1]}</div></div>`).join('')+`<button class="btn" onclick="backToRiskSearch()">✎ Ubah Pencarian</button>`;
+  const cls=riskCls(R.overall),gc=cls==='hi'?'#dc2626':cls==='md'?'#f97316':'#16a34a';
+  document.getElementById('riskKpis').innerHTML=`<div class="card risk-kpi"><div class="k-lbl">Skor Risiko Keseluruhan</div><div class="k-big risk-${cls}">${riskLevel(R.overall)}</div><div style="font-size:15px;font-weight:800;margin-top:2px">${R.overall} <span style="font-size:12px;color:var(--muted)">/100</span></div><div class="gauge" style="background:conic-gradient(${gc} ${R.overall*3.6}deg,#eceff4 0)"><b class="risk-${cls}">${R.overall}</b></div></div><div class="card risk-kpi"><div class="k-lbl">Level Risiko Dominan</div><div class="k-big risk-md">${R.hiCount} dari 5 Risiko Tinggi</div><div class="k-sub">Fokus pada mitigasi risiko prioritas</div></div><div class="card risk-kpi"><div class="k-lbl">Trend Risiko</div><div class="k-big ${R.trend==='Meningkat'?'risk-hi':R.trend==='Menurun'?'risk-lo':''}">${R.trend}</div><div class="k-sub">Perubahan harga ${R.trendPct>0?'+':''}${R.trendPct}% antar tahun data</div></div><div class="card risk-kpi"><div class="k-lbl">Tingkat Kepercayaan</div><div class="k-big" style="color:#2563eb">${R.confidence}%</div><div class="k-sub">${R.count>=100?'Confidence tinggi — data cukup untuk analisis':'Data terbatas — gunakan sebagai indikasi'}</div></div>`;
+  renderRiskTab();
+}
+function riskDonut(R){const tot=R.dims.reduce((a,d)=>a+d.score,0)||1,cols=['#e5484d','#f97316','#3b82f6','#f5c518','#22a06b'];let acc=0;const segs=R.dims.map((d,i)=>{const from=acc/tot*360;acc+=d.score;return `${cols[i]} ${from}deg ${acc/tot*360}deg`;}).join(',');return `<div class="risk-donut" style="background:conic-gradient(${segs})"></div>`;}
+function zoneClass(p,i){const v=p*i;return v>=17?'hm-z5':v>=11?'hm-z4':v>=6?'hm-z3':v>=3?'hm-z2':'hm-z1';}
+function heatmapHtml(R){
+  const ranked=R.dims.map(d=>({...d,prob:Math.max(1,Math.min(5,Math.ceil(d.score/20)))})).sort((a,b)=>b.score-a.score),at={};ranked.forEach((d,i)=>{at[d.prob+'-'+d.impact]=i+1;});
+  const yl={5:'Sangat Tinggi',4:'Tinggi',3:'Sedang',2:'Rendah',1:'Sangat Rendah'},xl={1:'Sangat Rendah',2:'Rendah',3:'Sedang',4:'Tinggi',5:'Sangat Tinggi'};
+  let h='<div class="heatmap">';
+  for(let imp=5;imp>=1;imp--){h+=`<div class="hm-yaxis">${imp}<br>${yl[imp]}</div>`;for(let p=1;p<=5;p++){const m=at[p+'-'+imp];h+=`<div class="hm-cell ${zoneClass(p,imp)}">${m?`<div class="hm-marker">${m}</div>`:''}</div>`;}}
+  h+='<div></div>'+[1,2,3,4,5].map(p=>`<div class="hm-xaxis">${p}<br>${xl[p]}</div>`).join('');
+  return h+'</div><div style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px;font-weight:700">Probabilitas →</div>';
+}
+function riskCauseTable(R){const ranked=[...R.dims].sort((a,b)=>b.score-a.score);return `<div class="card" style="padding:18px;margin-top:14px"><h2 style="font-size:15px;margin:0 0 14px">Akar Penyebab Risiko Utama</h2><div class="table-wrap" style="border:0"><table class="table" style="min-width:820px"><thead><tr><th>#</th><th>Risiko</th><th>Akar Penyebab Utama</th><th>Dampak Potensial</th><th>Level</th><th>Rekomendasi Singkat</th></tr></thead><tbody>${ranked.map((d,i)=>`<tr><td>${i+1}</td><td><b>${d.key}</b></td><td>${esc(d.root)}</td><td>${esc(d.dampak)}</td><td><span class="rl-badge b-${riskCls(d.score)}">${riskLevel(d.score)}</span></td><td>${esc(d.rek)}</td></tr>`).join('')}</tbody></table></div></div>`;}
+function riskRingkasan(R){
+  const ranked=[...R.dims].sort((a,b)=>b.score-a.score),cols=['#e5484d','#f97316','#3b82f6','#f5c518','#22a06b'],colOf={};R.dims.forEach((d,i)=>colOf[d.key]=cols[i]);
+  const legend=R.dims.map(d=>`<div class="rl-row"><span class="rl-dot" style="background:${colOf[d.key]}"></span><span>${d.key}</span><span class="rl-badge b-${riskCls(d.score)}">${riskLevel(d.score)} · ${d.score}</span></div>`).join('');
+  const top5=ranked.map((d,i)=>`<div class="rl-item"><div class="risk-rank">${i+1}</div><div>${d.key}</div><span class="rl-badge b-${riskCls(d.score)}">${riskLevel(d.score)}</span><b>${d.score}</b><div style="text-align:center">${d.score>=70?'↗':d.score>=45?'→':'↘'}</div></div>`).join('');
+  return `<div class="grid grid-3"><div class="card" style="padding:18px"><h2 style="font-size:14px;margin:0 0 14px">Distribusi Risiko per Kategori</h2><div style="display:flex;gap:16px;align-items:center">${riskDonut(R)}<div class="risk-legend">${legend}</div></div></div><div class="card" style="padding:18px"><h2 style="font-size:14px;margin:0 0 6px">Top 5 Risiko Tertinggi</h2><div class="risk-list">${top5}</div></div><div class="card" style="padding:18px"><h2 style="font-size:14px;margin:0 0 14px">Heatmap Peta Risiko</h2>${heatmapHtml(R)}</div></div>${riskCauseTable(R)}`;
+}
+function riskDetailTab(R){const ranked=[...R.dims].sort((a,b)=>b.score-a.score);return `<div class="grid grid-2">${ranked.map(d=>`<div class="card" style="padding:16px"><div style="display:flex;justify-content:space-between;align-items:center"><b>${d.key}</b><span class="rl-badge b-${riskCls(d.score)}">${riskLevel(d.score)} · ${d.score}</span></div><div class="progress-track" style="margin:10px 0"><div class="progress-fill ${d.score>=70?'danger':d.score>=45?'warn':''}" style="width:${d.score}%"></div></div><div style="font-size:11.5px;color:var(--muted);line-height:1.6"><b style="color:var(--ink)">Akar penyebab:</b> ${esc(d.root)}<br><b style="color:var(--ink)">Dampak:</b> ${esc(d.dampak)}</div></div>`).join('')}</div>`;}
+function riskTrendTab(R){const byYr={};R.M.forEach(r=>r.items.forEach(i=>{if(i.price>0)(byYr[r.year]=byYr[r.year]||[]).push(i.price);}));const yrs=Object.keys(byYr).sort(),avg=yrs.map(y=>byYr[y].reduce((a,b)=>a+b,0)/byYr[y].length),mx=Math.max(...avg,1);return `<div class="card" style="padding:18px"><h2 style="font-size:14px;margin:0 0 6px">Trend Harga Rata-rata per Tahun</h2><p class="subtext">Rata-rata harga item pada transaksi cocok.</p><div class="bars">${yrs.map((y,i)=>`<div class="bar-col"><div class="bar" style="height:${Math.max(4,avg[i]/mx*100)}%" data-tip="${shortRp(avg[i])}"></div><label>${y}</label></div>`).join('')||'<span class="subtext">Data tahun tidak cukup.</span>'}</div></div>`;}
+function riskBenchTab(R){const low=quantile(R.prices,.25),med=median(R.prices),high=quantile(R.prices,.75),mn=R.prices.length?Math.min(...R.prices):0,mxp=R.prices.length?Math.max(...R.prices):0,av=R.prices.reduce((a,b)=>a+b,0)/(R.prices.length||1);return `<div class="grid grid-2"><div class="card insight-card"><div class="insight-title"><span class="dot">Rp</span> Benchmark Harga Item</div><div class="price-row"><span>Kuartil bawah</span><b>${fmtRp(low)}</b></div><div class="price-track"><div class="price-range"></div><div class="price-marker"></div></div><div class="price-row"><span>Median</span><b>${fmtRp(med)}</b></div><div class="price-row"><span>Kuartil atas</span><b>${fmtRp(high)}</b></div></div><div class="card" style="padding:18px"><h2 style="font-size:14px;margin:0 0 10px">Statistik Harga</h2><div class="detail-line"><span>Total sampel</span><b>${fmt.format(R.prices.length)}</b></div><div class="detail-line"><span>Terendah</span><b>${fmtRp(mn)}</b></div><div class="detail-line"><span>Tertinggi</span><b>${fmtRp(mxp)}</b></div><div class="detail-line"><span>Rata-rata</span><b>${fmtRp(av)}</b></div></div></div>`;}
+function riskRekomTab(R){const ranked=[...R.dims].sort((a,b)=>b.score-a.score);return `<div class="card" style="padding:18px"><h2 style="font-size:15px;margin:0 0 4px">Rekomendasi Mitigasi</h2><p class="subtext" style="margin-bottom:8px">Diprioritaskan berdasarkan skor risiko tertinggi.</p>${ranked.map((d,i)=>`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)"><div class="risk-rank">${i+1}</div><div style="flex:1"><div style="display:flex;justify-content:space-between"><b>${d.key}</b><span class="rl-badge b-${riskCls(d.score)}">${riskLevel(d.score)}</span></div><p style="font-size:12px;color:var(--muted);margin:6px 0 0;line-height:1.55">${esc(d.rek)}</p></div></div>`).join('')}<div class="alert info" style="margin-top:14px">ℹ Rekomendasi indikatif dari pola historis. Validasi terhadap kebijakan pengadaan tetap diperlukan.</div></div>`;}
+function renderRiskTab(){const R=RISK;if(!R)return;const b=document.getElementById('riskTabBody');b.innerHTML=riskTab==='ringkasan'?riskRingkasan(R):riskTab==='detail'?riskDetailTab(R):riskTab==='peta'?'<div class="card" style="padding:20px"><h2 style="font-size:15px;margin:0 0 16px">Peta Risiko (Probabilitas × Dampak)</h2>'+heatmapHtml(R)+'</div>':riskTab==='trend'?riskTrendTab(R):riskTab==='benchmark'?riskBenchTab(R):riskRekomTab(R);}
+
+/* ===================== ASET & INVESTASI PROYEK ===================== */
+const DURABLE_RE=/laptop|server|komputer|notebook|genset|kendaraan|mobil|motor|mesin|printer|scanner|router|switch|\bups\b|panel|radiografi|alat/i;
+const assetHolder=r=>r.requester||r.requesterCode||'-';
+const assetItemName=r=>{const i=r.items.find(x=>x.name);return i?i.name:(r.name||'-');};
+const emptyRow=n=>`<tr><td colspan="${n}"><div class="empty" style="border:0;padding:24px">Tidak ada data</div></td></tr>`;
+function isAsset(r){return /it|alat operasi/i.test(r.toolType)||r.group==='INVESTASI'||DURABLE_RE.test(r.items.map(i=>i.name).join(' '));}
+function assetList(){return DATA.filter(isAsset);}
+function projTotals(){const m={};DATA.forEach(r=>{if(r.projectCode)m[r.projectCode]=(m[r.projectCode]||0)+(r.value||r.requestValue||0);});return m;}
+function renderAsset(){
+  const A=assetList(),tab=APP.assetTab||'registri',q=norm(document.getElementById('assetSearch').value);
+  const inves=A.filter(r=>r.group==='INVESTASI'),proyek=A.filter(r=>r.group==='PROYEK'),idle=A.filter(r=>r.group==='PROYEK'&&r.status==='Selesai');
+  document.getElementById('assetMetrics').innerHTML=[['Total Aset Terdeteksi',fmt.format(A.length),shortRp(sumBy(A,r=>r.value||r.requestValue))+' nilai','🏷'],['Sudah Investasi',fmt.format(inves.length),'Tercatat sbg investasi','✓'],['Kandidat Konversi',fmt.format(proyek.length),'Masih di anggaran proyek','⇄'],['Kandidat Idle',fmt.format(idle.length),'Dari proyek selesai','◷']].map(metricCard).join('');
+  const pt=projTotals();let html='';
+  if(tab==='registri'){
+    const rows=A.filter(r=>!q||norm(r.name+' '+r.projectCode+' '+assetHolder(r)+' '+assetItemName(r)).includes(q));
+    html=`<div class="table-wrap"><table class="table" style="min-width:980px"><thead><tr><th>Aset / Item</th><th>Proyek</th><th>Tipe Alat</th><th>Kelompok</th><th>Pemegang (PIC)</th><th>Nilai</th><th>Status</th></tr></thead><tbody>${rows.slice(0,400).map(r=>`<tr><td class="name-cell"><b>${esc(assetItemName(r))}</b><span>${esc(r.id)}</span></td><td>${esc(r.projectCode||'-')}</td><td>${esc(r.toolType||'-')}</td><td><span class="pill ${r.group==='INVESTASI'?'green':r.group==='PROYEK'?'amber':'gray'}">${esc(r.group||'-')}</span></td><td>${esc(assetHolder(r))}</td><td><b>${shortRp(r.value||r.requestValue)}</b></td><td><span class="pill ${r.status==='Selesai'?'green':'gray'}">${esc(r.status||'-')}</span></td></tr>`).join('')||emptyRow(7)}</tbody></table></div>`;
+    document.getElementById('assetCount').textContent=`${fmt.format(Math.min(rows.length,400))} dari ${fmt.format(rows.length)} aset`;
+  }else if(tab==='konversi'){
+    const rows=proyek.map(r=>({r,contrib:pt[r.projectCode]?(r.value||r.requestValue)/pt[r.projectCode]*100:0})).filter(x=>!q||norm(x.r.name+' '+x.r.projectCode+' '+assetItemName(x.r)).includes(q)).sort((a,b)=>(b.r.value||b.r.requestValue)-(a.r.value||a.r.requestValue));
+    html=`<div class="alert info" style="margin-bottom:12px">ℹ Aset dibeli via anggaran <b>PROYEK</b> namun bernilai guna tinggi — direkomendasikan dikonversi ke <b>INVESTASI</b> agar tidak hilang setelah proyek selesai.</div><div class="table-wrap"><table class="table" style="min-width:960px"><thead><tr><th>Aset / Item</th><th>Proyek</th><th>Nilai Aset</th><th>Kontribusi ke Proyek</th><th>Status</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(x=>`<tr><td class="name-cell"><b>${esc(assetItemName(x.r))}</b><span>${esc(x.r.id)}</span></td><td>${esc(x.r.projectCode||'-')}</td><td><b>${shortRp(x.r.value||x.r.requestValue)}</b></td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-track" style="width:80px"><div class="progress-fill" style="width:${Math.min(100,x.contrib)}%"></div></div><span>${x.contrib.toFixed(1)}%</span></div></td><td><span class="pill ${x.r.status==='Selesai'?'green':'gray'}">${esc(x.r.status||'-')}</span></td><td><button class="btn small primary" onclick="toast('Diajukan konversi ke INVESTASI (prototype).')">Konversi</button></td></tr>`).join('')||emptyRow(6)}</tbody></table></div>`;
+    document.getElementById('assetCount').textContent=`${fmt.format(rows.length)} kandidat konversi`;
+  }else if(tab==='pemegang'){
+    const hold={};A.forEach(r=>{const h=assetHolder(r),o=hold[h]||(hold[h]={h,cnt:0,val:0,items:new Set()});o.cnt++;o.val+=r.value||r.requestValue;o.items.add(assetItemName(r));});
+    const rows=Object.values(hold).filter(o=>!q||norm(o.h).includes(q)).sort((a,b)=>b.val-a.val);
+    html=`<div class="alert warn" style="margin-bottom:12px">⚠ Pemegang diturunkan dari <b>Nama Pemohon</b> (proxy PIC). Gunakan untuk menarik aset kembali ke unit sebagai aset resmi perusahaan.</div><div class="table-wrap"><table class="table"><thead><tr><th>Pemegang (PIC)</th><th>Jumlah Aset</th><th>Total Nilai</th><th>Contoh Aset</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(o=>`<tr><td class="name-cell"><b>${esc(o.h)}</b></td><td>${fmt.format(o.cnt)}</td><td><b>${shortRp(o.val)}</b></td><td>${esc([...o.items].slice(0,2).join(', '))}</td><td><button class="btn small" onclick="toast('Permintaan tarik aset dikirim (prototype).')">Tarik Aset</button></td></tr>`).join('')||emptyRow(5)}</tbody></table></div>`;
+    document.getElementById('assetCount').textContent=`${fmt.format(rows.length)} pemegang`;
+  }else{
+    const rows=idle.filter(r=>!q||norm(r.name+' '+assetHolder(r)+' '+assetItemName(r)).includes(q)).sort((a,b)=>(b.value||b.requestValue)-(a.value||a.requestValue));
+    html=`<div class="alert info" style="margin-bottom:12px">ℹ Aset dari proyek berstatus <b>Selesai</b> — kandidat <b>idle</b>. Publikasikan agar unit lain bisa memanfaatkan kembali.</div><div class="table-wrap"><table class="table" style="min-width:900px"><thead><tr><th>Aset / Item</th><th>Proyek (Selesai)</th><th>Pemegang</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>${rows.slice(0,300).map(r=>`<tr><td class="name-cell"><b>${esc(assetItemName(r))}</b><span>${esc(r.id)}</span></td><td>${esc(r.projectCode||'-')}</td><td>${esc(assetHolder(r))}</td><td><b>${shortRp(r.value||r.requestValue)}</b></td><td><button class="btn small soft" onclick="toast('Aset ditandai tersedia untuk dipakai ulang (prototype).')">Tandai Tersedia</button></td></tr>`).join('')||emptyRow(5)}</tbody></table></div>`;
+    document.getElementById('assetCount').textContent=`${fmt.format(rows.length)} kandidat idle`;
+  }
+  document.getElementById('assetBody').innerHTML=html;
+}
+
+/* ===================== SERAPAN & ANALISIS BELANJA ===================== */
+const absorbFactor=d=>0.5+((hashStr(d)%46)/100); // 0.50-0.95 (target RUP disimulasi)
+const isSewa=r=>/sewa/i.test(r.name)||r.items.some(i=>/sewa/i.test(i.name)||/sewa/i.test(i.desc));
+function priceGaps(){const m={};DATA.forEach(r=>r.items.forEach(i=>{if(i.name&&i.price>0)(m[i.name]=m[i.name]||[]).push(i.price);}));return Object.entries(m).filter(([k,a])=>a.length>=3).map(([name,a])=>{const min=Math.min(...a),max=Math.max(...a);return{name,n:a.length,min,max,med:median(a),ratio:min?max/min:0};}).filter(g=>g.ratio>=2).sort((a,b)=>b.ratio-a.ratio);}
+function lowAbsorbCount(){const byDir=groupSum(DATA,'directorate',r=>r.value||r.requestValue);return Object.keys(byDir).filter(d=>d).filter(d=>absorbFactor(d)*100<60).length;}
+function sewaBeliCandidates(){const m={};DATA.forEach(r=>{if(!isSewa(r))return;const k=assetItemName(r),o=m[k]||(m[k]={k,cnt:0,val:0});o.cnt++;o.val+=r.value||r.requestValue;});const arr=Object.values(m).filter(o=>o.cnt>=3).sort((a,b)=>b.cnt-a.cnt).slice(0,6);return arr.length?arr.map(o=>`<div class="detail-line"><span>${esc(o.k)} · ${fmt.format(o.cnt)}× sewa</span><b>${shortRp(o.val)}</b></div>`).join(''):'<div class="subtext">Tidak ada kandidat.</div>';}
+function renderSerapan(){
+  const tab=APP.serapanTab||'serapan',total=sumBy(DATA,r=>r.value||r.requestValue);
+  const sewa=DATA.filter(isSewa),sewaVal=sumBy(sewa,r=>r.value||r.requestValue),gaps=priceGaps();
+  document.getElementById('serapanMetrics').innerHTML=[['Total Belanja',shortRp(total),fmt.format(DATA.length)+' pengadaan','Rp'],['Belanja Sewa',shortRp(sewaVal),(total?(sewaVal/total*100).toFixed(1):'0')+'% dari total','⌁'],['Item Price-Gap',fmt.format(gaps.length),'Spek sama, harga >2×','⚠'],['Unit Serapan Rendah',fmt.format(lowAbsorbCount()),'< 60% target (sim)','◔']].map(metricCard).join('');
+  let html='';
+  if(tab==='serapan'){
+    const byDir=groupSum(DATA,'directorate',r=>r.value||r.requestValue),cntDir=countBy(DATA,'directorate'),rows=Object.entries(byDir).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]);
+    html=`<div class="alert info" style="margin-bottom:12px">ℹ Target RUP <b>disimulasi</b> (data rencana RUP belum tersedia). Sistem menandai unit dengan serapan rendah sebagai <b>peringatan dini</b> sebelum jadi dana keluar (outstanding).</div><div class="table-wrap"><table class="table"><thead><tr><th>Unit / Direktorat</th><th>Jumlah Paket</th><th>Realisasi</th><th>Target (RUP sim)</th><th>Serapan</th></tr></thead><tbody>${rows.map(([d,v])=>{const af=absorbFactor(d),pct=Math.round(af*100),cls=pct<60?'danger':pct<80?'warn':'';return `<tr><td class="name-cell"><b>${esc(d)}</b></td><td>${fmt.format(cntDir[d]||0)}</td><td><b>${shortRp(v)}</b></td><td>${shortRp(v/af)}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-track" style="width:90px"><div class="progress-fill ${cls}" style="width:${pct}%"></div></div><span>${pct}%</span>${pct<60?' <span class="rl-badge b-hi">Rendah</span>':''}</div></td></tr>`;}).join('')}</tbody></table></div>`;
+  }else if(tab==='sewabeli'){
+    const beliVal=total-sewaVal,sewaPct=total?sewaVal/total*100:0;
+    html=`<div class="grid grid-2"><div class="card" style="padding:18px"><h2 style="font-size:14px;margin:0 0 14px">Proporsi Sewa vs Beli (nilai)</h2><div style="display:flex;gap:20px;align-items:center"><div class="risk-donut" style="background:conic-gradient(#3b82f6 0deg ${sewaPct*3.6}deg,#22a06b ${sewaPct*3.6}deg 360deg)"></div><div class="risk-legend"><div class="rl-row"><span class="rl-dot" style="background:#3b82f6"></span><span>Sewa</span><b>${sewaPct.toFixed(1)}%</b></div><div class="rl-row"><span class="rl-dot" style="background:#22a06b"></span><span>Beli</span><b>${(100-sewaPct).toFixed(1)}%</b></div></div></div><div class="detail-line" style="margin-top:12px"><span>Nilai Sewa</span><b>${fmtRp(sewaVal)}</b></div><div class="detail-line"><span>Nilai Beli</span><b>${fmtRp(beliVal)}</b></div></div><div class="card" style="padding:18px"><h2 style="font-size:14px;margin:0 0 6px">Kandidat Sewa → Beli</h2><p class="subtext" style="margin-bottom:10px">Item sering disewa berulang mungkin lebih hemat jika dibeli/investasi.</p>${sewaBeliCandidates()}</div></div>`;
+  }else{
+    html=`<div class="alert warn" style="margin-bottom:12px">⚠ Item dengan spesifikasi (nama) sama namun rentang harga tidak wajar (maks ÷ min ≥ 2×). Contoh: laptop Rp10 jt vs Rp30 jt — sinyal untuk negosiasi/verifikasi.</div><div class="table-wrap"><table class="table" style="min-width:900px"><thead><tr><th>Item</th><th>Transaksi</th><th>Harga Min</th><th>Median</th><th>Harga Max</th><th>Gap</th><th>Risiko</th></tr></thead><tbody>${gaps.slice(0,300).map(g=>`<tr><td class="name-cell"><b>${esc(g.name)}</b></td><td>${fmt.format(g.n)}</td><td>${fmtRp(g.min)}</td><td>${fmtRp(g.med)}</td><td>${fmtRp(g.max)}</td><td><b>${g.ratio.toFixed(1)}×</b></td><td><span class="rl-badge b-${g.ratio>=4?'hi':g.ratio>=2.5?'md':'lo'}">${g.ratio>=4?'Tinggi':g.ratio>=2.5?'Sedang':'Rendah'}</span></td></tr>`).join('')||emptyRow(7)}</tbody></table></div>`;
+  }
+  document.getElementById('serapanBody').innerHTML=html;
+}
+
+/* ===================== OTOMASI & PERINGATAN (RPA + Digest) ===================== */
+function recurringItems(){const m={};DATA.forEach(r=>r.items.forEach(i=>{if(!i.name)return;const key=(r.vendor||'?')+'|'+i.name,o=m[key]||(m[key]={vendor:r.vendor,item:i.name,cnt:0,years:new Set(),lastYear:0,val:0});o.cnt++;o.years.add(r.year);o.lastYear=Math.max(o.lastYear,r.year);o.val+=(i.price||0)*(i.qty||1);}));return Object.values(m).filter(o=>o.cnt>=3&&(o.years.size>=2||/sewa/i.test(o.item))).sort((a,b)=>b.cnt-a.cnt).slice(0,12);}
+function navGo(v){showView(v);}
+function perpanjang(vendor,item){const r=DATA.find(x=>x.vendor===vendor&&x.items.some(i=>i.name===item))||DATA.find(x=>x.items.some(i=>i.name===item));if(r){selectedRef=r;currentQuery=item;showView('draft');toast('Draf perpanjangan disiapkan dari histori (RPA).');}else toast('Data sumber tidak ditemukan.');}
+function renderOtomasi(){
+  const pend=DATA.filter(r=>r.status==='Penilaian').filter(r=>!APP.apprState[r.id]).length;
+  const idle=assetList().filter(r=>r.group==='PROYEK'&&r.status==='Selesai').length;
+  const gaps=priceGaps().length,low=lowAbsorbCount(),rec=recurringItems();
+  document.getElementById('digestMetrics').innerHTML=[['Menunggu Approval',fmt.format(pend),'Perlu keputusan','✓'],['Aset Idle',fmt.format(idle),'Bisa dipakai ulang','◷'],['Price-Gap',fmt.format(gaps),'Anomali harga','⚠'],['Serapan Rendah',fmt.format(low),'Unit < 60%','◔']].map(metricCard).join('');
+  const alerts=[];
+  if(pend)alerts.push({ic:'✓',c:'blue',t:`${fmt.format(pend)} pengadaan menunggu persetujuan`,d:'Segera review agar tidak menumpuk menjadi outstanding.',act:"navGo('approval')"});
+  if(low)alerts.push({ic:'◔',c:'orange',t:`${low} unit dengan serapan anggaran rendah`,d:'Penyerapan < 60% target — potensi dana keluar tidak optimal.',act:"navGo('serapan')"});
+  if(idle)alerts.push({ic:'◷',c:'purple',t:`${fmt.format(idle)} aset pasca-proyek berstatus idle`,d:'Tarik / manfaatkan ulang sebelum hilang dari pantauan.',act:"navGo('asset')"});
+  if(gaps)alerts.push({ic:'⚠',c:'orange',t:`${fmt.format(gaps)} item terindikasi price-gap tidak wajar`,d:'Spek sama tapi harga jauh berbeda — cek sebelum pengadaan baru.',act:"navGo('serapan')"});
+  if(rec.length)alerts.push({ic:'⟳',c:'green',t:`${rec.length} pengadaan berulang mendekati siklus`,d:'Sistem menyiapkan draf perpanjangan otomatis (RPA).',act:"navGo('otomasi')"});
+  document.getElementById('digestList').innerHTML=alerts.map(a=>`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)"><div class="insight-ico ic-${a.c}" style="width:34px;height:34px;font-size:15px;margin:0;flex:0 0 auto">${a.ic}</div><div style="flex:1"><b style="font-size:13px">${a.t}</b><p class="subtext" style="margin:3px 0 0">${a.d}</p></div>${a.act?`<button class="btn small" onclick="${a.act}">Lihat</button>`:''}</div>`).join('')||'<div class="subtext">Tidak ada peringatan.</div>';
+  document.getElementById('recurringList').innerHTML=rec.map((o,i)=>`<div style="display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)"><div class="risk-rank">${i+1}</div><div style="flex:1;min-width:0"><b style="font-size:12px">${esc(o.item)}</b><div class="subtext" style="margin-top:2px">${esc(o.vendor||'-')} · ${o.cnt}× · terakhir ${o.lastYear}</div></div><button class="btn small primary" onclick="perpanjang('${jsStr(o.vendor||'')}','${jsStr(o.item)}')">Perpanjang →</button></div>`).join('')||'<div class="subtext">Tidak ada pengadaan berulang.</div>';
+}
+
+const STOP=new Set('pengadaan untuk dan atau yang di ke dari pada dengan dalam serta kebutuhan barang jasa unit paket pekerjaan pembelian penyediaan'.split(' '));
+const fmt=new Intl.NumberFormat('id-ID');
+const fmtRp=n=>'Rp'+fmt.format(Math.round(Number(n)||0));
+const shortRp=n=>{n=Number(n)||0;if(n>=1e12)return 'Rp'+(n/1e12).toFixed(1).replace('.',',')+' T';if(n>=1e9)return 'Rp'+(n/1e9).toFixed(1).replace('.',',')+' M';if(n>=1e6)return 'Rp'+(n/1e6).toFixed(1).replace('.',',')+' jt';return fmtRp(n)};
+const esc=s=>String(s??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const tokens=s=>[...new Set(norm(s).split(/\s+/).filter(x=>x.length>1&&!STOP.has(x)))];
+const median=a=>{if(!a.length)return 0;const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2};
+const quantile=(a,q)=>{if(!a.length)return 0;const b=[...a].sort((x,y)=>x-y),p=(b.length-1)*q,i=Math.floor(p),f=p-i;return b[i+1]!==undefined?b[i]+f*(b[i+1]-b[i]):b[i]};
+const countBy=(arr,key)=>arr.reduce((m,x)=>{const k=typeof key==='function'?key(x):x[key];if(k)m[k]=(m[k]||0)+1;return m},{});
+const sumBy=(arr,key)=>arr.reduce((s,x)=>s+(Number(typeof key==='function'?key(x):x[key])||0),0);
+const groupSum=(arr,key,val)=>arr.reduce((m,x)=>{const k=typeof key==='function'?key(x):x[key];if(k)m[k]=(m[k]||0)+(Number(typeof val==='function'?val(x):x[val])||0);return m},{});
+function debounce(fn,wait=250){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}
+
+let currentQuery='', searchResults=[], selectedRef=null, detailRecord=null, compareIds=new Set(), histPage=1, histFiltered=[];
+
+function fillOptions(){
+  const reset=id=>{const el=document.getElementById(id);el.length=1;return el;};// keep first static option
+  ['resultYear','histYear','reportYear'].forEach(id=>{const el=reset(id);YEARS.forEach(y=>el.add(new Option(y,y)))});
+  ['fDir','reportDir'].forEach(id=>{const el=reset(id);DIRECTORATES.forEach(d=>el.add(new Option(d,d)))});
+  const hs=reset('histStatus');STATUSES.forEach(s=>hs.add(new Option(s,s)));
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
+function showView(name){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+name).classList.add('active');document.querySelectorAll('.nav-btn[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===name));document.getElementById('crumbTitle').textContent={guided:'Guided Procurement',draft:'Buat Pengadaan',history:'Daftar Pengadaan',report:'Report & Analytics',approval:'Persetujuan',vendor:'Evaluasi Vendor',master:'Master Data',efisiensi:'Peluang Efisiensi',risk:'Risk Analysis',asset:'Aset & Investasi',serapan:'Serapan & Belanja',otomasi:'Otomasi & Peringatan'}[name]||name;window.scrollTo({top:0,behavior:'smooth'});if(name==='history')renderHistory();if(name==='report')renderReport();if(name==='draft')renderDraft();if(name==='approval')renderApproval();if(name==='vendor')renderVendors();if(name==='master')renderMaster();if(name==='efisiensi')renderEfisiensi();if(name==='risk'&&RISK)renderRisk();if(name==='asset')renderAsset();if(name==='serapan')renderSerapan();if(name==='otomasi')renderOtomasi();}
+
+document.querySelectorAll('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+function scoreRecord(r,q){
+  const ts=tokens(q);if(!ts.length)return null;let score=0,why=[];const nq=norm(q);
+  if(r._name.includes(nq)){score+=44;why.push('frasa sama pada nama pengadaan')}
+  if(r._items.includes(nq)){score+=38;why.push('frasa sama pada item')}
+  let nm=0,im=0,dm=0,mm=0;
+  ts.forEach(t=>{if(r._name.includes(t))nm++;if(r._items.includes(t))im++;if(r._desc.includes(t))dm++;if(r._meta.includes(t))mm++});
+  score+=nm*16+im*14+dm*5+mm*3;
+  if(nm)why.push(`${nm} kata cocok pada nama`);if(im)why.push(`${im} kata cocok pada item`);if(dm&&!im)why.push('deskripsi item relevan');
+  const coverage=new Set(ts.filter(t=>r._all.includes(t))).size/ts.length;score+=coverage*28;
+  const recency=Math.max(0,r.year-2021)*1.5;score+=recency;
+  if(['Selesai','SPPBJ','Perjanjian','BAST'].includes(r.status))score+=4;
+  if(!nm&&!im&&!dm&&coverage<.5)return null;
+  return {r,score:Math.min(99,Math.round(score)),why:[...new Set(why)].slice(0,3),coverage};
+}
+function doSearch(q){
+  q=(q||'').trim();if(q.length<2){toast('Masukkan minimal 2 karakter.');return}
+  currentQuery=q;document.getElementById('mainSearch').value=q;document.getElementById('guidedLanding').style.display='none';document.getElementById('guidedResults').style.display='block';document.getElementById('resultList').innerHTML='<div class="loading"><span class="spinner"></span>Menganalisis histori pengadaan...</div>';
+  setTimeout(()=>{searchResults=DATA.map(r=>scoreRecord(r,q)).filter(Boolean).sort((a,b)=>b.score-a.score||b.r.year-a.r.year).slice(0,120);document.getElementById('resultHeading').textContent=`Referensi untuk “${q}”`;document.getElementById('resultSub').textContent=`${fmt.format(searchResults.length)} kandidat relevan dari ${fmt.format(DATA.length)} pengadaan historis.`;renderResults();renderInsights();},120);
+}
+function filteredResults(){const f=norm(document.getElementById('resultFilter').value),y=document.getElementById('resultYear').value,t=document.getElementById('resultType').value;return searchResults.filter(x=>(!f||x.r._all.includes(f))&&(y==='all'||String(x.r.year)===y)&&(t==='all'||x.r.type===t)).slice(0,30)}
+function renderResults(){const list=document.getElementById('resultList'),rows=filteredResults();if(!rows.length){list.innerHTML='<div class="empty"><div class="empty-icon">⌕</div><h3>Belum ada referensi yang cocok</h3><p>Coba gunakan nama barang atau jasa yang lebih spesifik.</p></div>';return}list.innerHTML=rows.map((x,idx)=>historyCard(x,idx)).join('');}
+function historyCard(x,idx){const r=x.r,item=r.items[0]||{},selected=compareIds.has(r.id);return `<div class="card history-card"><div class="history-main"><div class="history-top"><div class="history-title"><span class="pill ${r.type==='Barang'?'blue':r.type==='Jasa'?'green':'amber'}">${esc(r.type||'Tidak diketahui')}</span><h3>${esc(r.name||r.id)}</h3><div class="meta"><span>${esc(r.id)}</span><span>•</span><span>${r.year}</span><span>•</span><span>${esc(r.directorate||'Unit tidak tersedia')}</span></div></div><div class="score"><strong>${x.score}%</strong><span>relevansi</span></div></div><div class="history-stats"><div class="stat-cell"><label>Nilai</label><b>${shortRp(r.value||r.requestValue)}</b></div><div class="stat-cell"><label>Vendor</label><b title="${esc(r.vendor)}">${esc(r.vendor||'-')}</b></div><div class="stat-cell"><label>Metode</label><b title="${esc(r.method)}">${esc(r.method||'-')}</b></div><div class="stat-cell"><label>Item Utama</label><b title="${esc(item.name||'')}">${esc(item.name||'-')}</b></div></div><div class="why">${x.why.map(w=>`<span>✓ ${esc(w)}</span>`).join('')}</div></div><div class="history-actions"><button class="btn ${selected?'soft':''}" onclick="toggleCompare('${esc(r.id)}')">${selected?'Dipilih':'Bandingkan'}</button><button class="btn" onclick="openDetail('${esc(r.id)}')">Lihat Detail</button><button class="btn primary" onclick="useReference('${esc(r.id)}')">Gunakan Referensi</button></div></div>`}
+function relevantSet(){return searchResults.slice(0,30).map(x=>x.r)}
+function recommendationSummary(){const arr=relevantSet(),top=searchResults[0];if(!arr.length)return null;const types=countBy(arr,'type'),groups=countBy(arr,'group'),methods=countBy(arr,'method');const winner=o=>Object.entries(o).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-';const itemPrices=[];arr.forEach(r=>r.items.forEach(i=>{if(i.price>0)itemPrices.push(i.price)}));const vendors=groupSum(arr,'vendor',r=>r.value||r.requestValue);return {type:winner(types),group:winner(groups),method:winner(methods),low:quantile(itemPrices,.25),med:median(itemPrices),high:quantile(itemPrices,.75),prices:itemPrices,vendors:Object.entries(vendors).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,5),confidence:top?Math.round(Math.min(96,(top.score+(searchResults.slice(0,5).reduce((s,x)=>s+x.score,0)/Math.min(5,searchResults.length)))/2)):0,count:arr.length};}
+function renderInsights(){const p=document.getElementById('insightPanel'),s=recommendationSummary();if(!s){p.innerHTML='<div class="card empty"><h3>Insight belum tersedia</h3></div>';return}p.innerHTML=`<div class="card insight-card"><div class="insight-title"><span class="dot">✦</span> Rekomendasi jalur</div><span class="pill blue">${esc(s.type)}</span><div class="recommend-big" style="margin-top:9px">${esc(s.group)} · ${esc(s.method)}</div><div class="subtext">Disimpulkan dari pola ${s.count} referensi teratas. Metode tetap perlu divalidasi terhadap nilai dan kebijakan yang berlaku.</div></div><div class="card insight-card"><div class="insight-title"><span class="dot">Rp</span> Benchmark harga item</div><div class="price-row"><span>Kuartil bawah</span><b>${fmtRp(s.low)}</b></div><div class="price-track"><div class="price-range"></div><div class="price-marker"></div></div><div class="price-row"><span>Median</span><b>${fmtRp(s.med)}</b></div><div class="price-row"><span>Kuartil atas</span><b>${fmtRp(s.high)}</b></div><div class="subtext">Harga item historis dari hasil relevan. Perhatikan spesifikasi, volume, lokasi, dan tahun transaksi.</div></div><div class="card insight-card"><div class="insight-title"><span class="dot">V</span> Vendor historis</div><div class="vendor-list">${s.vendors.map(([v,n])=>`<div class="vendor-row"><div><b>${esc(v)}</b><span>Pernah menangani kebutuhan relevan</span></div><b>${shortRp(n)}</b></div>`).join('')||'<span class="subtext">Tidak ada data vendor.</span>'}</div></div><div class="card insight-card"><div class="insight-title"><span class="dot">%</span> Confidence</div><div class="confidence"><div class="confidence-ring" style="--pct:${s.confidence}%"><b>${s.confidence}%</b></div><div><b style="font-size:12px">${s.confidence>=80?'Tinggi':s.confidence>=60?'Cukup':'Rendah'}</b><div class="subtext">Berdasarkan kesamaan kata, item, metadata, dan kebaruan data.</div></div></div></div><div class="alert warn">⚠ Rekomendasi bukan keputusan final. Validasi HPS, ketersediaan vendor, kontrak, dan regulasi tetap wajib dilakukan.</div>`}
+function resetSearch(){currentQuery='';searchResults=[];document.getElementById('guidedLanding').style.display='block';document.getElementById('guidedResults').style.display='none';document.getElementById('mainSearch').value='';document.getElementById('resultFilter').value='';compareIds.clear();updateCompareDock();window.scrollTo({top:0,behavior:'smooth'})}
+function openDetail(id){detailRecord=DATA.find(x=>x.id===id);if(!detailRecord)return;const r=detailRecord;document.getElementById('detailTitle').textContent=r.name||r.id;document.getElementById('detailSub').textContent=`${r.id} · ${r.year}`;document.getElementById('detailBody').innerHTML=`<div class="detail-grid"><div class="detail-item"><label>Jenis</label><b>${esc(r.type||'-')}</b></div><div class="detail-item"><label>Kelompok</label><b>${esc(r.group||'-')}</b></div><div class="detail-item"><label>Metode</label><b>${esc(r.method||'-')}</b></div><div class="detail-item"><label>Status</label><b>${esc(r.status||'-')}</b></div><div class="detail-item"><label>Unit</label><b>${esc(r.directorate||r.requesterCode||'-')}</b></div><div class="detail-item"><label>Vendor</label><b>${esc(r.vendor||'-')}</b></div><div class="detail-item"><label>Nilai Pengajuan</label><b>${fmtRp(r.requestValue)}</b></div><div class="detail-item"><label>Nilai Pengadaan</label><b>${fmtRp(r.value)}</b></div></div><h3 style="font-size:13px">Daftar Item (${r.items.length})</h3><div style="overflow:auto"><table class="items-table"><thead><tr><th>Item</th><th>Deskripsi</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead><tbody>${r.items.map(i=>`<tr><td><b>${esc(i.name||'-')}</b></td><td>${esc(i.desc||'-')}</td><td>${fmt.format(i.qty||0)}</td><td>${fmtRp(i.price)}</td><td>${fmtRp((i.qty||0)*(i.volume||1)*(i.price||0))}</td></tr>`).join('')}</tbody></table></div>`;openModal('detailModal')}
+function openModal(id){document.getElementById(id).classList.add('open')}function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
+function useReference(id){const r=DATA.find(x=>x.id===id);if(!r)return;selectedRef=r;closeModal('detailModal');showView('draft');toast('Referensi berhasil dipasang ke draft.');}
+function renderDraft(){const b=document.getElementById('referenceBanner');if(selectedRef){b.innerHTML=`<div class="reference-banner"><b>Referensi terpilih: ${esc(selectedRef.name)}</b><p>${esc(selectedRef.id)} · ${selectedRef.year} · ${esc(selectedRef.vendor||'Vendor tidak tersedia')} · ${fmtRp(selectedRef.value||selectedRef.requestValue)}</p></div>`;document.getElementById('fName').value=currentQuery?`Pengadaan ${currentQuery}`:selectedRef.name;document.getElementById('fType').value=selectedRef.type||'';document.getElementById('fGroup').value=selectedRef.group||'';document.getElementById('fDir').value=selectedRef.directorate||'';document.getElementById('fMethod').value=selectedRef.method||'';document.getElementById('fValue').value=Math.round(selectedRef.value||selectedRef.requestValue||0);document.getElementById('fDesc').value=`Referensi histori: ${selectedRef.name} (${selectedRef.id}, ${selectedRef.year}). Mohon sesuaikan kebutuhan saat ini.`;document.getElementById('fSpec').value=selectedRef.items.slice(0,8).map((i,n)=>`${n+1}. ${i.name}${i.desc?' - '+i.desc:''}`).join('\n');document.getElementById('draftGuidance').innerHTML=`Sistem mengisi sebagian data dari <b>${esc(selectedRef.id)}</b>. Review spesifikasi, kuantitas, nilai, dan metode sebelum melanjutkan.`}else{b.innerHTML='';}}
+function toggleCompare(id){compareIds.has(id)?compareIds.delete(id):compareIds.size<3?compareIds.add(id):toast('Maksimal 3 pengadaan untuk dibandingkan.');updateCompareDock();renderResults()}
+function updateCompareDock(){const d=document.getElementById('compareDock');d.classList.toggle('show',compareIds.size>0);document.getElementById('compareText').textContent=`${compareIds.size} pengadaan dipilih`;document.getElementById('openCompare').disabled=compareIds.size<2}
+function renderCompare(){const arr=[...compareIds].map(id=>DATA.find(x=>x.id===id)).filter(Boolean);if(arr.length<2)return;const rows=[['Nomor',r=>r.id],['Tahun',r=>r.year],['Nama',r=>r.name],['Jenis',r=>r.type],['Kelompok',r=>r.group],['Metode',r=>r.method],['Unit',r=>r.directorate],['Vendor',r=>r.vendor],['Nilai',r=>fmtRp(r.value||r.requestValue)],['Status',r=>r.status],['Jumlah Item',r=>r.items.length]];document.getElementById('compareBody').innerHTML=`<div style="overflow:auto"><table class="items-table"><thead><tr><th>Aspek</th>${arr.map(r=>`<th>${esc(r.id)}</th>`).join('')}</tr></thead><tbody>${rows.map(([l,f])=>`<tr><td><b>${l}</b></td>${arr.map(r=>`<td>${esc(f(r))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;openModal('compareModal')}
+
+function getHistoryFiltered(){const q=norm(document.getElementById('histSearch').value),y=document.getElementById('histYear').value,t=document.getElementById('histType').value,s=document.getElementById('histStatus').value;return DATA.filter(r=>(!q||r._all.includes(q))&&(y==='all'||String(r.year)===y)&&(t==='all'||r.type===t)&&(s==='all'||r.status===s)).sort((a,b)=>b.year-a.year||b.value-a.value)}
+function renderHistory(){histFiltered=getHistoryFiltered();const per=25,pages=Math.max(1,Math.ceil(histFiltered.length/per));histPage=Math.min(histPage,pages);const rows=histFiltered.slice((histPage-1)*per,histPage*per);document.getElementById('historyBody').innerHTML=rows.map(r=>`<tr><td class="name-cell"><b>${esc(r.name||r.id)}</b><span>${esc(r.id)}</span></td><td>${r.year}</td><td><span class="pill ${r.type==='Barang'?'blue':r.type==='Jasa'?'green':'amber'}">${esc(r.type||'-')}</span></td><td>${esc(r.directorate||'-')}</td><td>${esc(r.vendor||'-')}</td><td><b>${fmtRp(r.value||r.requestValue)}</b></td><td><span class="pill ${r.status==='Selesai'?'green':'gray'}">${esc(r.status||'-')}</span></td><td><button class="btn" onclick="openDetail('${esc(r.id)}')">Detail</button></td></tr>`).join('');document.getElementById('histCount').textContent=`Menampilkan ${rows.length} dari ${fmt.format(histFiltered.length)} data · Halaman ${histPage}/${pages}`;document.getElementById('histPrev').disabled=histPage<=1;document.getElementById('histNext').disabled=histPage>=pages;}
+function reportFiltered(){const y=document.getElementById('reportYear').value,t=document.getElementById('reportType').value,d=document.getElementById('reportDir').value;return DATA.filter(r=>(y==='all'||String(r.year)===y)&&(t==='all'||r.type===t)&&(d==='all'||r.directorate===d))}
+function renderReport(){const arr=reportFiltered(),total=sumBy(arr,r=>r.value||r.requestValue),vendors=new Set(arr.map(r=>r.vendor).filter(Boolean)).size,complete=arr.length?arr.filter(r=>r.docStatus==='Sudah Lengkap').length/arr.length*100:0;document.getElementById('reportMetrics').innerHTML=[['Total Nilai',shortRp(total),'Akumulasi nilai pengadaan unik','Rp'],['Jumlah Pengadaan',fmt.format(arr.length),'Nomor pengadaan unik','▤'],['Vendor Historis',fmt.format(vendors),'Vendor pada data terfilter','V'],['Dokumen Lengkap',complete.toFixed(1).replace('.',',')+'%','Status dokumen sudah lengkap','✓']].map(x=>`<div class="card metric"><div class="metric-top"><span class="metric-label">${x[0]}</span><span class="metric-icon">${x[3]}</span></div><div class="metric-value">${x[1]}</div><div class="metric-sub">${x[2]}</div></div>`).join('');const yrs=groupSum(arr,'year',r=>r.value||r.requestValue),max=Math.max(...YEARS.map(y=>yrs[y]||0),1);document.getElementById('yearBars').innerHTML=YEARS.map(y=>`<div class="bar-col"><div class="bar" style="height:${Math.max(3,(yrs[y]||0)/max*100)}%" data-tip="${shortRp(yrs[y]||0)}"></div><label>${y}</label></div>`).join('');renderRank('topVendors',groupSum(arr,'vendor',r=>r.value||r.requestValue),5,true);renderRank('methodRanks',groupSum(arr,'method',r=>r.value||r.requestValue),6,true);renderRank('dirRanks',groupSum(arr,'directorate',r=>r.value||r.requestValue),6,true)}
+function renderRank(id,obj,limit,isValue){const rows=Object.entries(obj).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,limit),mx=rows[0]?.[1]||1;document.getElementById(id).innerHTML=rows.map(([k,v],i)=>`<div class="rank-row"><div class="rank-no">${i+1}</div><div class="rank-info"><b>${esc(k)}</b><div class="mini-track"><div class="mini-fill" style="width:${v/mx*100}%"></div></div></div><div class="rank-value">${isValue?shortRp(v):fmt.format(v)}</div></div>`).join('')||'<span class="subtext">Tidak ada data.</span>'}
+function csvDownload(name,rows){if(!rows.length)return toast('Tidak ada data untuk diekspor.');const headers=Object.keys(rows[0]),csv=[headers.join(';'),...rows.map(r=>headers.map(h=>'"'+String(r[h]??'').replace(/"/g,'""')+'"').join(';'))].join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+
+// Events
+document.getElementById('mainSearchBtn').addEventListener('click',()=>doSearch(document.getElementById('mainSearch').value));document.getElementById('mainSearch').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch(e.target.value)});document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>doSearch(b.dataset.q)));document.getElementById('resetSearch').addEventListener('click',resetSearch);document.getElementById('resultFilter').addEventListener('input',debounce(renderResults,120));document.getElementById('resultYear').addEventListener('change',renderResults);document.getElementById('resultType').addEventListener('change',renderResults);document.getElementById('createFromSearch').addEventListener('click',()=>{selectedRef=searchResults[0]?.r||null;showView('draft')});document.getElementById('useDetailRef').addEventListener('click',()=>detailRecord&&useReference(detailRecord.id));document.getElementById('openCompare').addEventListener('click',renderCompare);document.getElementById('clearCompare').addEventListener('click',()=>{compareIds.clear();updateCompareDock();renderResults()});
+['histSearch','histYear','histType','histStatus'].forEach(id=>document.getElementById(id).addEventListener(id==='histSearch'?'input':'change',()=>{histPage=1;renderHistory()}));document.getElementById('histPrev').addEventListener('click',()=>{histPage--;renderHistory()});document.getElementById('histNext').addEventListener('click',()=>{histPage++;renderHistory()});document.getElementById('exportHistory').addEventListener('click',()=>csvDownload('daftar_pengadaan.csv',getHistoryFiltered().map(r=>({'Nomor Pengadaan':r.id,'Tahun':r.year,'Nama Pengadaan':r.name,'Jenis':r.type,'Kelompok':r.group,'Direktorat':r.directorate,'Metode':r.method,'Vendor':r.vendor,'Nilai':r.value,'Status':r.status}))));
+['reportYear','reportType','reportDir'].forEach(id=>document.getElementById(id).addEventListener('change',renderReport));document.getElementById('exportReport').addEventListener('click',()=>{const a=reportFiltered();csvDownload('ringkasan_report.csv',[{'Jumlah Pengadaan':a.length,'Total Nilai':sumBy(a,r=>r.value||r.requestValue),'Jumlah Vendor':new Set(a.map(r=>r.vendor).filter(Boolean)).size,'Dokumen Lengkap':a.filter(r=>r.docStatus==='Sudah Lengkap').length}])});
+document.getElementById('saveDraft').addEventListener('click',()=>toast('Draft prototype berhasil disimpan.'));document.getElementById('continueDraft').addEventListener('click',()=>toast('Prototype: lanjut ke tahap spesifikasi.'));
+
+// --- Persetujuan events ---
+document.querySelectorAll('#apprTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#apprTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');APP.apprTab=b.dataset.atab;APP.apprPage=1;renderApproval();}));
+document.getElementById('apprSearch').addEventListener('input',debounce(()=>{APP.apprPage=1;renderApproval();},150));
+document.getElementById('apprPrev').addEventListener('click',()=>{APP.apprPage--;renderApproval();});
+document.getElementById('apprNext').addEventListener('click',()=>{APP.apprPage++;renderApproval();});
+
+// --- Vendor events ---
+document.getElementById('vendorSearch').addEventListener('input',debounce(()=>{APP.vendorShown=24;renderVendors();},150));
+document.getElementById('vendorSort').addEventListener('change',()=>{APP.vendorShown=24;renderVendors();});
+document.getElementById('vendorMore').addEventListener('click',()=>{APP.vendorShown+=24;renderVendors();});
+document.getElementById('addContract').addEventListener('click',()=>{if(APP.vendorSel)document.getElementById('ctVendor').value=APP.vendorSel;openModal('contractModal');});
+document.getElementById('saveContract').addEventListener('click',saveContract);
+
+// --- Master Data events ---
+document.querySelectorAll('#masterTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#masterTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');APP.masterTab=b.dataset.mtab;renderMaster();}));
+document.getElementById('masterSearch').addEventListener('input',debounce(renderMaster,150));
+document.getElementById('exportMaster').addEventListener('click',()=>csvDownload('master_'+APP.masterTab+'.csv',APP._masterRaw||[]));
+
+// --- Peluang Efisiensi events ---
+document.getElementById('planAllEff').addEventListener('click',()=>toast('Rencana aksi efisiensi dibuat (prototype).'));
+document.getElementById('planAllEff2').addEventListener('click',()=>toast('Rencana aksi efisiensi dibuat (prototype).'));
+
+// --- Risk Analysis events ---
+document.getElementById('analyzeRisk').addEventListener('click',()=>{showView('risk');doRiskAnalysis(currentQuery);});
+document.getElementById('riskSearchBtn').addEventListener('click',()=>doRiskAnalysis(document.getElementById('riskSearchInput').value));
+document.getElementById('riskSearchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doRiskAnalysis(e.target.value);});
+document.querySelectorAll('#riskTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#riskTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');riskTab=b.dataset.rtab;renderRiskTab();}));
+document.getElementById('riskExport').addEventListener('click',()=>{if(!RISK)return;csvDownload('risk_'+RISK.q+'.csv',RISK.dims.map(d=>({Risiko:d.key,Skor:d.score,Level:riskLevel(d.score),'Akar Penyebab':d.root,Dampak:d.dampak,Rekomendasi:d.rek})));});
+document.getElementById('riskMitigate').addEventListener('click',()=>toast('Rencana mitigasi dibuat (prototype).'));
+
+// --- Aset & Investasi events ---
+document.querySelectorAll('#assetTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#assetTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');APP.assetTab=b.dataset.atab2;renderAsset();}));
+document.getElementById('assetSearch').addEventListener('input',debounce(renderAsset,150));
+document.getElementById('assetExport').addEventListener('click',()=>csvDownload('aset_investasi.csv',assetList().map(r=>({Item:assetItemName(r),Nomor:r.id,Proyek:r.projectCode,Tipe:r.toolType,Kelompok:r.group,Pemegang:assetHolder(r),Nilai:r.value||r.requestValue,Status:r.status}))));
+
+// --- Serapan & Belanja events ---
+document.querySelectorAll('#serapanTabs .subtab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#serapanTabs .subtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');APP.serapanTab=b.dataset.stab2;renderSerapan();}));
+
+// --- CSV import / data gate ---
+function pickFile(){document.getElementById('fileInput').click();}
+document.getElementById('importBtn').addEventListener('click',pickFile);
+document.getElementById('fileInput').addEventListener('change',e=>ingestFile(e.target.files[0]));
+document.getElementById('gateFile').addEventListener('change',e=>ingestFile(e.target.files[0]));
+const dz=document.getElementById('dropzone');
+['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('dov');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('dov');}));
+dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)ingestFile(f);});
+
+autoLoad();
+</script>
+</body>
